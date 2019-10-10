@@ -29,7 +29,7 @@ impl Component for Component1 {
         &state.child1
     }
 
-    fn render() -> DomElement {
+    fn render(&self) -> DomElement {
         DomElement::default()
     }
 }
@@ -45,7 +45,7 @@ impl Component for Component2 {
         &state.child2
     }
 
-    fn render() -> DomElement {
+    fn render(&self) -> DomElement {
         DomElement::default()
     }
 }
@@ -54,6 +54,11 @@ fn main() {
     let state = ModuleState::default();
     let component1 = Component1::default();
     let component2 = Component2::default();
+
+    Component1::filter_state(&state);
+    Component2::filter_state(&state);
+
+    serde_json::to_string(&state);
 
     println!("Hello, world!");
 }
