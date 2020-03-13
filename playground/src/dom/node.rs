@@ -22,7 +22,7 @@ pub struct Node {
 
 impl Default for Node {
     fn default() -> Self {
-        Node{
+        Node {
             name: "".into(),
             listeners: Vec::new(),
             attributes: Vec::new(),

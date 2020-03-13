@@ -44,7 +44,7 @@ fn run_it() {
     let mut state: State = match Arc::try_unwrap(state) {
         Ok(state) => state,
         Err(arc_state) => {
-            error!("We still have {} strong references to arc although it should be 0",Arc::strong_count(&arc_state));
+            error!("We still have {} strong references to arc although it should be 0", Arc::strong_count(&arc_state));
             let reference: &State = &arc_state;
             reference.clone()
         }
@@ -71,7 +71,7 @@ mod tests {
     #[test]
     fn run() {
         println!("1");
-        let _ = env_logger::builder().is_test(true).default_format().filter(None,LevelFilter::Debug).try_init().unwrap();
+        let _ = env_logger::builder().is_test(true).default_format().filter(None, LevelFilter::Debug).try_init().unwrap();
         println!("2");
         info!("starting");
         run_it();

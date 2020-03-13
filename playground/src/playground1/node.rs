@@ -1,8 +1,8 @@
 use std::borrow::Cow;
 
-use crate::playground1::local_component::{LocalComponentWrapper};
+use crate::playground1::callback::CallbackWrapper;
+use crate::playground1::local_component::LocalComponentWrapper;
 use crate::playground1::native_component::NativeComponent;
-use crate::playground1::callback::{CallbackWrapper};
 
 pub struct Node {
     pub native_name: Option<Cow<'static, str>>,

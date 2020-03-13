@@ -1,15 +1,17 @@
 use std::borrow::Cow;
 
-use crate::playground1::callback::{ TypedInputCallbackRef};
-use crate::playground1::native_component::{NativeComponent, NativeEvent};
+use crate::playground1::callback::TypedInputCallbackRef;
+use crate::playground1::native_component::NativeComponent;
 use crate::playground1::node::{Node, NodeChildren, NodeComponentWrapper};
 
 pub struct Label {
     pub text: Cow<'static, str>,
 }
+
 pub struct Div {
     pub children: Vec<Node>,
 }
+
 pub struct ClickEvent;
 
 pub struct Button {

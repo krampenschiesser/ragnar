@@ -16,6 +16,6 @@ pub struct Incrementer {
 
 impl Incrementer {
     pub fn get_next(&self) -> u64 {
-        self.counter.fetch_add(1,Ordering::AcqRel)
+        self.counter.fetch_add(1, Ordering::AcqRel)
     }
 }

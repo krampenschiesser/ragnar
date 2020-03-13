@@ -43,7 +43,7 @@ impl<MSG: Message> GlobalRender for DomElement<MSG> {}
 
 impl<MSG: Message> From<DomElement<MSG>> for Renderable {
     fn from(_: DomElement<MSG>) -> Self {
-        Renderable{}
+        Renderable {}
     }
 }
 

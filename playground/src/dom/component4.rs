@@ -104,7 +104,7 @@ impl Component for App {
     }
 }
 
-pub trait NativeEvent: Any  +Clone {}
+pub trait NativeEvent: Any + Clone {}
 
 pub struct NativeEventWrapper<T: NativeEvent> {
     id: u64,

@@ -1,9 +1,6 @@
 use std::any::Any;
 use std::marker::PhantomData;
 
-use crate::playground1::app_component::AppEvent;
-use crate::playground1::local_component::LocalEvent;
-
 #[derive(Clone, Copy)]
 pub struct TypedInputCallbackRef<In> {
     pub id: u64,

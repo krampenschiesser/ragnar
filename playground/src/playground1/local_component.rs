@@ -1,9 +1,6 @@
-use std::any::Any;
-
 use downcast_rs::{Downcast, impl_downcast};
-use serde::export::PhantomData;
 
-use crate::playground1::callback::{TypedInputCallbackRef, Callback};
+use crate::playground1::callback::{Callback, TypedInputCallbackRef};
 use crate::playground1::INCREMENTER;
 use crate::playground1::node::Node;
 
@@ -29,7 +26,7 @@ pub trait LocalComponent: LocalComponentWrapper {
 
 pub struct UpdateResult<T: LocalComponent> {
     should_render: bool,
-    callbacks: Vec<TypedInputCallbackRef<T::Msg>>
+    callbacks: Vec<TypedInputCallbackRef<T::Msg>>,
 }
 
 pub trait LocalComponentWrapper {

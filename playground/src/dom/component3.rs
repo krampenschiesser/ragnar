@@ -131,8 +131,8 @@ mod tests {
         // fn render(&self, state: &Self::State) -> Node {
         // }
 
-        fn update(&self, msg: &Self::Msg) -> Self{
-            Other(self.0+1)
+        fn update(&self, msg: &Self::Msg) -> Self {
+            Other(self.0 + 1)
         }
     }
 
@@ -157,7 +157,7 @@ mod tests {
         }
 
         fn update(&self, msg: &Self::Msg) -> Self {
-            Bla(self.0+1)
+            Bla(self.0 + 1)
         }
     }
 

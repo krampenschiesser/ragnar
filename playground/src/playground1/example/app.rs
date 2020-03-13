@@ -1,6 +1,6 @@
 use crate::playground1::app_component::{AppComponent, AppEvent, AppState};
 use crate::playground1::example::local::IncDecWidget;
-use crate::playground1::example::native::{Div, Label};
+use crate::playground1::example::native::Label;
 use crate::playground1::local_component::LocalComponent;
 use crate::playground1::node::{Node, NodeChildren, NodeComponentWrapper};
 
@@ -26,7 +26,7 @@ impl AppComponent for App {
     type State = State;
 
     fn render(&self, state: &Self::State) -> Node {
-        let label = Label { text: format!("Clicked: {}", state.count).into() };
+        let _label = Label { text: format!("Clicked: {}", state.count).into() };
 
         let callback = Self::create_app_callback(Box::new(|value: &u32| {
             StateChange::NewCount(*value)
