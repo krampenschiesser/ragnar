@@ -1,5 +1,6 @@
-use crate::lib::{Message, DomElement, Component};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
+
+use crate::{Component, DomElement, GlobalRender, Message, Renderable};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Msg {
@@ -13,9 +14,9 @@ pub struct State {
     switch: bool
 }
 
-type Module = crate::lib::Module<Msg, State>;
+type Module = crate::Module<Msg, State>;
 
-impl crate::lib::State<Msg> for State {
+impl crate::State<Msg> for State {
     fn update(&mut self, message: Msg) {
         match message {
             Msg::Switch => self.switch = !self.switch,
@@ -25,20 +26,15 @@ impl crate::lib::State<Msg> for State {
 
 struct MyComponent {}
 
-impl Component<Msg> for MyComponent {
-    type GlobalState = State;
-    type LocalState = State;
-
-    fn filter_state(state: &Self::GlobalState) -> &Self::LocalState {
-        state
-    }
-
-    fn render(&self, state: &Self::LocalState) -> DomElement {
-        if state.switch {
-            DomElement::default()
-        } else {
-            DomElement::default()
-        }
+impl Component<Msg, State> for MyComponent {
+    fn render(&self, state: &State) -> Renderable {
+        unimplemented!()
+        // let element: DomElement<Msg> = DomElement::default();
+        // if state.switch {
+        //     element
+        // } else {
+        //     element
+        // }.into()
     }
 }
 

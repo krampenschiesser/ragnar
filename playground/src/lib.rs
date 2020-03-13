@@ -1,27 +1,31 @@
-use serde::{Serialize, de::DeserializeOwned};
-use std::sync::Arc;
+// use serde::{Serialize, de::DeserializeOwned};
+// use std::sync::Arc;
 
-#[derive(Default, Debug)]
-pub struct DomElement {
-    children: Vec<Box<DomElement>>
-}
+// mod dom;
+// mod module1;
+mod playground1;
+
+/**
+pub use dom::DomElement;
+use serde::export::fmt::Debug;
+
 
 pub enum UpdateResult {
     ShouldRender,
     SkipRender,
 }
 
-pub trait Component<T: Message> {
-    type State: State<T>;
+pub trait GlobalRender{}
+pub struct Renderable{}
 
-    fn update(&mut self, state: &Self::State) -> UpdateResult {
-        UpdateResult::ShouldRender
-    }
-
-    fn render(&self, state: &Self::State) -> DomElement;
+pub trait Component<MSG: Message, STATE: State<MSG>> {
+    // fn update(&mut self, state: &STATE) -> UpdateResult {
+    //     UpdateResult::ShouldRender
+    // };
+    fn render(&self, state: &STATE) -> Renderable;
 }
 
-pub trait Message: Serialize + DeserializeOwned + Clone {}
+pub trait Message: Serialize + DeserializeOwned + Clone+Debug {}
 
 pub trait State<T: Message>: Serialize + DeserializeOwned + Clone + Default {
     fn update(&mut self, message: T);
@@ -33,8 +37,8 @@ pub struct Module<M: Message, S: State<M>> {
     messages: Vec<M>,
 }
 
-pub struct ChildModule<MI: Message, M: Message, SI: State<MI>, S: State<M>>{
-    module: Module<M,S>,
+pub struct ChildModule<MI: Message, M: Message, SI: State<MI>, S: State<M>> {
+    module: Module<M, S>,
     inherited_state: Option<Arc<SI>>,
     inherited_message_callback: Option<Box<dyn Fn(MI)>>,
 }
@@ -84,3 +88,6 @@ impl<M: Message, S: State<M>> Default for Module<M, S> {
         Self::new()
     }
 }
+
+*/
+struct Bla;

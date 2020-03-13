@@ -1,7 +1,7 @@
-use serde::{Serialize, Deserialize};
-use threadpool::ThreadPool;
-use std::sync::Arc;
+use serde::{Deserialize, Serialize};
 use std::ops::Deref;
+use std::sync::Arc;
+use threadpool::ThreadPool;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default, Eq, PartialEq)]
 struct State {
@@ -64,8 +64,9 @@ fn run_it() {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use log::LevelFilter;
+
+    use super::*;
 
     #[test]
     fn run() {
