@@ -1,6 +1,6 @@
 use crate::playground1::callback::TypedInputCallbackRef;
 use crate::playground1::example::native::{Button, ClickEvent, Div};
-use crate::playground1::local_component::{LocalComponent, LocalEvent};
+use crate::playground1::local_component::{LocalComponent, LocalEvent, UpdateResult};
 use crate::playground1::native_component::NativeComponent;
 use crate::playground1::node::{Node, NodeChildren, NodeComponentWrapper};
 
@@ -41,19 +41,20 @@ impl LocalComponent for IncDecWidget {
         let div = Div {
             children,
         };
-        Node {
-            children: NodeChildren::Nodes(vec![div.render()]),
-            native_name: None,
-            component: NodeComponentWrapper::Local(Box::new(self)),
-            callbacks: vec![increment_callback.into(), decrement_callback.into()],
-        }
+        Node::empty().with_child(div.render()).with_local_component(self).with_callback(increment_callback).with_callback(decrement_callback)
     }
 
-    fn update(&mut self, msg: &Self::Msg) -> bool {
-        match msg {
-            IncDecMsg::Decrement => self.count -= 1,
-            IncDecMsg::Increment => self.count += 1,
-        }
-        false
+
+    fn update(&self, msg: &Self::Msg) -> UpdateResult<Self> {
+        UpdateResult::NewState(Box::new(match msg {
+            IncDecMsg::Increment => Self {
+                on_change: self.on_change,
+                count: self.count + 1,
+            },
+            IncDecMsg::Decrement => Self {
+                on_change: self.on_change,
+                count: self.count - 1,
+            },
+        }))
     }
 }

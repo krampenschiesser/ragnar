@@ -5,6 +5,8 @@ mod local_component;
 mod app_component;
 mod native_component;
 mod node;
+mod runtime;
+mod attribute;
 
 mod example;
 

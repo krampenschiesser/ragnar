@@ -13,9 +13,6 @@ pub trait AppComponent {
     fn render(&self, state: &Self::State) -> Node;
 
     fn create_app_callback<In: 'static>(callback: Box<dyn Fn(&In) -> Self::Msg>) -> Callback<In, Self::Msg> {
-        Callback {
-            id: INCREMENTER.get_next(),
-            callback,
-        }
+        Callback::new_app(callback)
     }
 }

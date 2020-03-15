@@ -36,11 +36,7 @@ impl AppComponent for App {
             count: state.count,
             on_change: callback.get_input_ref(),
         };
-        Node {
-            component: NodeComponentWrapper::None,
-            callbacks: vec![callback.into()],
-            native_name: None,
-            children: NodeChildren::Nodes(vec![widget.render()]),
-        }
+
+        Node::empty().with_callback(callback).with_child(widget.render())
     }
 }

@@ -1,3 +1,5 @@
+use std::any::Any;
+
 use downcast_rs::{Downcast, impl_downcast};
 
 use crate::playground1::callback::{Callback, TypedInputCallbackRef};
@@ -14,36 +16,41 @@ pub trait LocalComponent: LocalComponentWrapper {
 
     fn render(self) -> Node;
 
-    fn update(&mut self, msg: &Self::Msg) -> bool;
+    fn update(&self, msg: &Self::Msg) -> UpdateResult<Self>;
 
     fn create_local_callback<In>(callback: Box<dyn Fn(&In) -> Self::Msg>) -> Callback<In, Self::Msg> {
-        Callback {
-            id: INCREMENTER.get_next(),
-            callback,
-        }
+        Callback::new_local(callback)
     }
 }
 
-pub struct UpdateResult<T: LocalComponent> {
-    should_render: bool,
-    callbacks: Vec<TypedInputCallbackRef<T::Msg>>,
+pub enum UpdateResult<T: LocalComponent + ?Sized> {
+    NewRender(Node),
+    NewState(Box<T>),
+    Nothing,
+}
+
+impl<T: LocalComponent> From<Node> for UpdateResult<T> {
+    fn from(n: Node) -> Self {
+        UpdateResult::NewRender(n)
+    }
+}
+
+impl<T: LocalComponent> From<T> for UpdateResult<T> {
+    fn from(t: T) -> Self {
+        UpdateResult::NewState(Box::new(t))
+    }
 }
 
 pub trait LocalComponentWrapper {
-    fn handle(self, event: &dyn LocalEvent) -> LocalHandleResult;
+    fn handle(&self, event: &Box<dyn Any>) -> LocalHandleResult;
 }
 
 impl<T: LocalComponent + 'static> LocalComponentWrapper for T {
-    fn handle(mut self, event: &dyn LocalEvent) -> LocalHandleResult {
+    fn handle(&self, event: &Box<dyn Any>) -> LocalHandleResult {
         if let Some(event) = event.downcast_ref::<T::Msg>() {
-            let should_render = self.update(event);
-            if should_render {
-                LocalHandleResult::NewRender(self.render())
-            } else {
-                LocalHandleResult::NewState(Box::new(self))
-            }
+            self.update(event).into()
         } else {
-            LocalHandleResult::NewState(Box::new(self))
+            LocalHandleResult::Keep
         }
     }
 }
@@ -51,5 +58,15 @@ impl<T: LocalComponent + 'static> LocalComponentWrapper for T {
 pub enum LocalHandleResult {
     NewState(Box<dyn LocalComponentWrapper>),
     NewRender(Node),
+    Keep,
 }
 
+impl<T: LocalComponent + 'static> From<UpdateResult<T>> for LocalHandleResult {
+    fn from(t: UpdateResult<T>) -> Self {
+        match t {
+            UpdateResult::NewState(t) => LocalHandleResult::NewState(t as Box<dyn LocalComponentWrapper>),
+            UpdateResult::NewRender(node) => LocalHandleResult::NewRender(node),
+            UpdateResult::Nothing => LocalHandleResult::Keep,
+        }
+    }
+}
