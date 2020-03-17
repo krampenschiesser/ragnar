@@ -5,8 +5,9 @@ use std::ops::Deref;
 use crate::playground1::attribute::Attribute;
 use crate::playground1::callback::CallbackWrapper;
 use crate::playground1::INCREMENTER;
-use crate::playground1::local_component::{LocalComponent, LocalComponentWrapper};
+use crate::playground1::local_component::LocalComponentWrapper;
 use crate::playground1::native_component::{NativeComponent, NativeComponentWrapper};
+use crate::playground1::node::NodeComponentWrapper::LocalDetached;
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Copy, Clone, Hash)]
 pub struct NodeId(pub u64);
@@ -40,7 +41,7 @@ impl Node {
         }
     }
 
-    pub fn set<T: Into<Cow<'static, str>>, A: Into<Attribute>>(mut self, name: T, attribute: A) -> Self{
+    pub fn set<T: Into<Cow<'static, str>>, A: Into<Attribute>>(mut self, name: T, attribute: A) -> Self {
         self.attributes.insert(name.into(), attribute.into());
         self
     }
@@ -89,6 +90,7 @@ impl Node {
 
 pub enum NodeComponentWrapper {
     Local(Box<dyn LocalComponentWrapper>),
+    LocalDetached,
     Native(Box<dyn NativeComponentWrapper>),
     None,
 }

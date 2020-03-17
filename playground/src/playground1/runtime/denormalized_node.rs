@@ -5,6 +5,7 @@ use crate::playground1::attribute::Attribute;
 use crate::playground1::callback::{CallbackId, CallbackWrapper};
 use crate::playground1::local_component::LocalComponentWrapper;
 use crate::playground1::node::{Node, NodeChildren, NodeComponentWrapper, NodeId};
+use crate::playground1::runtime::diff::operations::ParentPosition;
 
 pub struct NodeContainer {
     pub nodes: HashMap<NodeId, StrippedNode>,
@@ -67,7 +68,7 @@ impl NodeContainer {
             attributes,
         };
         self.nodes.insert(id, node);
-        children.into_iter().enumerate().for_each(|(pos, c)| {
+        children.into_iter().enumerate().for_each(|(_pos, c)| {
             self.add_node(c, Some(id))
         });
     }
@@ -92,18 +93,33 @@ impl NodeContainer {
             n.component = NodeComponentWrapper::Local(state);
         }
     }
-    pub(crate) fn replace_node(&mut self, mut new_node: Node, old_node_id: NodeId) {
+    pub(crate) fn replace_node(&mut self, new_node: Node, old_node_id: NodeId) -> Option<(Option<ParentPosition>, NodeContainer)> {
         if let Some(old_node) = self.nodes.remove(&old_node_id) {
             let parent = old_node.parent;
-            self.replace_child_in_parent(&old_node_id, new_node.id, &parent);
-            self.remove_recursive(old_node);
+            let index = self.replace_child_in_parent(&old_node_id, new_node.id, &parent);
+            let mut container = NodeContainer {
+                callbacks: HashMap::new(),
+                nodes: HashMap::new(),
+                root_node: old_node_id,
+            };
+            self.remove_recursive(old_node, &mut container);
             self.add_node(new_node, parent);
+            let parent = if let Some((p, i)) = parent.and_then(|p| index.map(|i| (p, i))) {
+                Some(ParentPosition { parent: p, index: i as u64 })
+            } else {
+                None
+            };
+            Some((parent, container))
+        } else {
+            None
         }
     }
 
-    fn remove_recursive(&mut self, node: StrippedNode) {
+    fn remove_recursive(&mut self, node: StrippedNode, container: &mut NodeContainer) {
         node.callbacks.iter().for_each(|cid| {
-            self.callbacks.remove(cid);
+            if let Some(callback) = self.callbacks.remove(cid) {
+                container.callbacks.insert(callback.id, callback);
+            }
         });
         if let Some(parent) = node.parent {
             if let Some(parent) = self.nodes.get_mut(&parent) {
@@ -115,22 +131,40 @@ impl NodeContainer {
 
         node.children.iter().for_each(|c| {
             if let Some(removed) = self.nodes.remove(c) {
-                self.remove_recursive(removed);
+                self.remove_recursive(removed, container);
             }
-        })
+        });
+        container.nodes.insert(node.id, node);
     }
 
-    fn replace_child_in_parent(&mut self, old_node_id: &NodeId, new_node_id: NodeId, parent: &Option<NodeId>) -> () {
+    fn replace_child_in_parent(&mut self, old_node_id: &NodeId, new_node_id: NodeId, parent: &Option<NodeId>) -> Option<usize> {
         if let Some(parent_pos) = parent {
             if let Some(parent) = self.nodes.get_mut(parent_pos) {
                 if let Some(index) = parent.children.iter().position(|cid| cid == old_node_id) {
                     std::mem::replace(&mut parent.children[index], new_node_id);
+                    return Some(index);
                 }
             }
         }
+        None
     }
     pub fn get_node(&self, node_id: &NodeId) -> Option<&StrippedNode> {
         self.nodes.get(node_id)
+    }
+    pub fn get_node_mut(&mut self, node_id: &NodeId) -> Option<&mut StrippedNode> {
+        self.nodes.get_mut(node_id)
+    }
+    pub fn get_callback(&self, callback_id: &CallbackId) -> Option<&CallbackWrapper> {
+        self.callbacks.get(callback_id)
+    }
+}
+
+impl StrippedNode {
+    pub fn is_native_equal(&self, other: &Self) -> bool {
+        if self.native_name != other.native_name {
+            return false;
+        }
+        false
     }
 }
 

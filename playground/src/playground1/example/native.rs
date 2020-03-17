@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use crate::playground1::callback::TypedInputCallbackRef;
 use crate::playground1::native_component::{NativeComponent, NativeEvent};
-use crate::playground1::node::{Node, NodeChildren, NodeComponentWrapper};
+use crate::playground1::node::{Node};
 
 pub struct Label {
     pub text: Cow<'static, str>,
@@ -24,7 +24,7 @@ pub struct Button {
 
 impl NativeComponent for Label {
     fn render(self) -> Node {
-        let cow = self.text.clone();
+        let _cow = self.text.clone();
         Node::empty().with_text(self.text.clone()).with_native_name("label").with_native_component(self)
     }
 }

@@ -1,3 +1,4 @@
+#[derive(Debug, PartialEq,Clone)]
 pub enum Attribute {
     Bool(bool),
     Text(String),

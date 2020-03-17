@@ -1,4 +1,5 @@
 use std::any::Any;
+use std::borrow::Cow;
 use std::marker::PhantomData;
 
 use crate::playground1::app_component::AppEvent;
@@ -6,9 +7,8 @@ use crate::playground1::INCREMENTER;
 use crate::playground1::local_component::LocalEvent;
 use crate::playground1::native_component::NativeEvent;
 use crate::playground1::node::NodeId;
-use std::borrow::Cow;
 
-#[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd,Hash)]
+#[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct CallbackId(u64);
 
 #[derive(Clone, Copy)]
@@ -29,6 +29,21 @@ pub enum CallbackType {
     Local,
     Native(Cow<'static, str>),
     App,
+}
+
+impl CallbackType {
+    pub fn is_native(&self) -> bool {
+        match self {
+            CallbackType::Native(_) => true,
+            _ => false,
+        }
+    }
+    pub fn get_native_name(&self) -> Option<&Cow<'static, str>> {
+        match self {
+            CallbackType::Native(cow) => Some(cow),
+            _ => None,
+        }
+    }
 }
 
 impl<In, Out: LocalEvent> Callback<In, Out> {

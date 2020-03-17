@@ -2,8 +2,8 @@ use std::any::Any;
 
 use downcast_rs::{Downcast, impl_downcast};
 
-use crate::playground1::callback::{Callback, TypedInputCallbackRef};
-use crate::playground1::INCREMENTER;
+use crate::playground1::callback::{Callback};
+
 use crate::playground1::node::Node;
 
 pub trait LocalEvent: Downcast {}
@@ -26,7 +26,7 @@ pub trait LocalComponent: LocalComponentWrapper {
 pub enum UpdateResult<T: LocalComponent + ?Sized> {
     NewRender(Node),
     NewState(Box<T>),
-    Nothing,
+    Keep,
 }
 
 impl<T: LocalComponent> From<Node> for UpdateResult<T> {
@@ -36,8 +36,16 @@ impl<T: LocalComponent> From<Node> for UpdateResult<T> {
 }
 
 impl<T: LocalComponent> From<T> for UpdateResult<T> {
-    fn from(t: T) -> Self {
-        UpdateResult::NewState(Box::new(t))
+    fn from(n: T) -> Self {
+        UpdateResult::NewState(Box::new(n))
+    }
+}
+impl<T: LocalComponent> From<Option<T>> for UpdateResult<T> {
+    fn from(n: Option<T>) -> Self {
+        match n {
+            Some(t) =>UpdateResult::NewState(Box::new(t)),
+            None => UpdateResult::Keep,
+        }
     }
 }
 
@@ -66,7 +74,7 @@ impl<T: LocalComponent + 'static> From<UpdateResult<T>> for LocalHandleResult {
         match t {
             UpdateResult::NewState(t) => LocalHandleResult::NewState(t as Box<dyn LocalComponentWrapper>),
             UpdateResult::NewRender(node) => LocalHandleResult::NewRender(node),
-            UpdateResult::Nothing => LocalHandleResult::Keep,
+            UpdateResult::Keep => LocalHandleResult::Keep,
         }
     }
 }
