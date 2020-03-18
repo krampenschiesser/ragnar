@@ -6,7 +6,7 @@ use crate::playground1::runtime::denormalized_node::{NodeContainer, StrippedNode
 use crate::playground1::runtime::diff::operations::{AddNode, DiffOperation, ParentPosition, RemoveAttribute, RemoveListener, RemoveNode, SetAttribute, SetListener, SwapNode, SwapNodeId};
 
 pub mod operations;
-
+pub mod initialadddiff;
 pub struct CompleteDiff<'a> {
     original: &'a NodeContainer,
     new: &'a NodeContainer,
