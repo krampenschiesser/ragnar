@@ -2,11 +2,12 @@ use std::path::Component;
 
 use crate::playground1::app_component::{AppComponent, AppEvent, AppState};
 use crate::playground1::callback::TypedInputCallbackRef;
-use crate::playground1::module::Module;
-use crate::playground1::node::Node;
 use crate::playground1::example::module::module1::{ModuleLocalMsg, ModuleLocalState, MyModuleComponent};
+use crate::playground1::module::Module;
+use crate::playground1::node::{Node, TypedNode};
 
 mod module1;
+
 pub struct GlobalState {
     module_state: ModuleLocalState
 }
@@ -29,12 +30,12 @@ impl AppComponent for MyAppComponent {
     type Msg = GlobalMsg;
     type State = GlobalState;
 
-    fn render(&self, state: &Self::State) -> Node {
+    fn render(&self, state: &Self::State) -> TypedNode<Self::Msg> {
         let callback = Self::create_app_callback(Box::new(|s: &String| GlobalMsg::Other));
         let child = MyModuleComponent { callback: callback.get_input_ref() };
         let node = child.render(&state.module_state);
 
-        Node::empty().with_child(node)
+        TypedNode::empty().with_child_and_converter(node, |e: ModuleLocalMsg| GlobalMsg::Local(e))
     }
 }
 
@@ -70,7 +71,7 @@ impl AppComponent for Mod2 {
     type Msg = ModuleLocalMsg;
     type State = ModuleLocalState;
 
-    fn render(&self, state: &Self::State) -> Node {
+    fn render(&self, state: &Self::State) -> TypedNode<Self::Msg> {
         unimplemented!()
     }
 }

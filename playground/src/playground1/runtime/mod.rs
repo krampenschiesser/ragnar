@@ -23,7 +23,7 @@ pub struct Runtime<C: AppComponent<State=State, Msg=Msg>, State: AppState, Msg: 
 impl<C: AppComponent<State=State, Msg=Msg>, State: AppState, Msg: AppEvent> Runtime<C, State, Msg> {
     pub fn handle_event(&mut self, id: CallbackId, event: Box<dyn Any>) -> Result<Vec<DiffOperation>, DiffError> {
         let mut handling_result = EventHandlingResult::new();
-        self.execute_chained_callbacks(id, &event, &mut handling_result);
+        self.execute_chained_callbacks(id, &event, &mut handling_result)?;
         let EventHandlingResult { state_changes: changes, local_node_updates: node_updates } = handling_result;
         if changes.is_empty() {
             let mut diff_ops = Vec::new();
@@ -84,13 +84,22 @@ impl<C: AppComponent<State=State, Msg=Msg>, State: AppState, Msg: AppEvent> Runt
                 (self.update_function)(&mut self.state, event);
             }
         }
-        self.root_component.render(&self.state)
+        self.root_component.render(&self.state).into_node()
     }
 
-    fn execute_chained_callbacks(&self, id: CallbackId, event: &Box<dyn Any>, handling_result: &mut EventHandlingResult) {
+    fn execute_chained_callbacks(&self, id: CallbackId, event: &Box<dyn Any>, handling_result: &mut EventHandlingResult) -> Result<(),DiffError> {
         let mut execute_additional = None;
         if let Some(callback_wrapper) = self.root.callbacks.get(&id) {
-            if let Some(event) = (callback_wrapper.callback)(event) {
+            let executed = (callback_wrapper.callback)(event);
+            let node = self.root.get_node(&callback_wrapper.node_id).ok_or(DiffError::NewNodeNotFound(callback_wrapper.node_id))?;
+            // if let Some((converters,event)) = node.converters.and_then(|s|executed.map(|e|(s,e))) {
+            //     converters.iter().rev().for_each(|c|{
+            //         // (c)(event);
+            //     })
+            // }
+            //fixme chl apply converters to event
+
+            if let Some(event) = executed {
                 if !callback_wrapper.chained.is_empty() {
                     execute_additional = Some((event, callback_wrapper.chained.clone()));
                 } else {
@@ -107,6 +116,7 @@ impl<C: AppComponent<State=State, Msg=Msg>, State: AppState, Msg: AppEvent> Runt
                 self.execute_chained_callbacks(callback_id, &event, handling_result);
             }
         }
+        Ok(())
     }
 }
 

@@ -1,10 +1,11 @@
 use std::borrow::Cow;
 use std::collections::HashMap;
+use std::rc::Rc;
 
 use crate::playground1::attribute::Attribute;
 use crate::playground1::callback::{CallbackId, CallbackWrapper};
 use crate::playground1::local_component::LocalComponentWrapper;
-use crate::playground1::node::{Node, NodeChildren, NodeComponentWrapper, NodeId};
+use crate::playground1::node::{Converter, Node, NodeChildren, NodeComponentWrapper, NodeId};
 use crate::playground1::runtime::diff::operations::ParentPosition;
 
 pub struct NodeContainer {
@@ -22,6 +23,7 @@ pub struct StrippedNode {
     pub callbacks: Vec<CallbackId>,
     pub children: Vec<NodeId>,
     pub attributes: HashMap<Cow<'static, str>, Attribute>,
+    pub converters: Option<Vec<Rc<Converter>>>,
 }
 
 
@@ -32,11 +34,11 @@ impl NodeContainer {
             callbacks: HashMap::new(),
             root_node: node.id,
         };
-        container.add_node(node, None);
+        container.add_node(node, None, None);
         container
     }
 
-    fn add_node(&mut self, node: Node, parent: Option<NodeId>) {
+    fn add_node(&mut self, node: Node, parent: Option<NodeId>, converters: Option<Vec<Rc<Converter>>>) {
         let Node {
             id,
             native_name,
@@ -44,6 +46,7 @@ impl NodeContainer {
             children,
             callbacks,
             attributes,
+            converter,
         } = node;
         let (text_child, children) = match children {
             NodeChildren::Empty => (None, Vec::with_capacity(0)),
@@ -56,7 +59,14 @@ impl NodeContainer {
             self.callbacks.insert(c.id, c);
         });
         let children_ids = children.iter().map(|c| c.id).collect();
-
+        let converters = if let Some(mut converters) = converters {
+            if let Some(converter) = converter {
+                converters.push(Rc::new(converter));
+            }
+            Some(converters)
+        } else {
+            None
+        };
         let node = StrippedNode {
             native_name,
             parent,
@@ -66,10 +76,11 @@ impl NodeContainer {
             text_child,
             children: children_ids,
             attributes,
+            converters: converters.clone(),
         };
         self.nodes.insert(id, node);
         children.into_iter().enumerate().for_each(|(_pos, c)| {
-            self.add_node(c, Some(id))
+            self.add_node(c, Some(id), converters.clone())
         });
     }
 
@@ -102,8 +113,10 @@ impl NodeContainer {
                 nodes: HashMap::new(),
                 root_node: old_node_id,
             };
+            let converters = parent.and_then(|p| self.nodes.get(&p))
+                .and_then(|o| o.converters.clone());
             self.remove_recursive(old_node, &mut container);
-            self.add_node(new_node, parent);
+            self.add_node(new_node, parent, converters);
             let parent = if let Some((p, i)) = parent.and_then(|p| index.map(|i| (p, i))) {
                 Some(ParentPosition { parent: p, index: i as u64 })
             } else {

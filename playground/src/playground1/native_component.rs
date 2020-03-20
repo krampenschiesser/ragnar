@@ -23,16 +23,3 @@ impl<T: NativeComponent> NativeComponentWrapper for T {
         NativeComponent::render(self)
     }
 }
-
-// pub struct NativeComponent {
-//     pub id: u32,
-//     pub name: Cow<'static, str>,
-//     pub attributes: HashMap<Cow<'static, str>,Cow<'static, str>>,
-//     pub children: NativeComponentChildren,
-// }
-//
-// pub enum NativeComponentChildren {
-//     TextChild(Cow<'static, str>),
-//     Children(Vec<NativeComponent>),
-//     Empty,
-// }
