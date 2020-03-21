@@ -2,10 +2,11 @@ use std::borrow::Cow;
 use std::collections::HashMap;
 
 use crate::playground1::attribute::Attribute;
-use crate::playground1::callback::{CallbackId, CallbackType, CallbackWrapper};
+use crate::playground1::callback::{CallbackId, NativeCallbackWrapper};
 use crate::playground1::node::NodeId;
-use crate::playground1::runtime::denormalized_node::{NodeContainer, StrippedNode};
 use crate::playground1::runtime::diff::DiffError;
+use crate::playground1::runtime::node_container::{NativeView, NodeContainer};
+use crate::playground1::runtime::node_container::stripped_node::StrippedNativeNode;
 
 pub struct SetAttribute {
     pub node_id: NodeId,
@@ -65,52 +66,44 @@ pub enum DiffOperation {
 }
 
 impl SetListener {
-    pub fn may_from(callback: &CallbackWrapper) -> Option<Self> {
-        match &callback.callback_type {
-            CallbackType::Native(native_name) => {
-                Some(
-                    Self {
-                        callback_name: native_name.clone(),
-                        node_id: callback.node_id,
-                        id: callback.id,
-                    }
-                )
-            }
-            _ => None
+    pub fn from(callback: &NativeCallbackWrapper) -> Self {
+        Self {
+            callback_name: callback.native_name.clone(),
+            node_id: callback.node_id,
+            id: callback.id,
         }
     }
 }
 
 impl AddNode {
-    pub fn new(node: &StrippedNode, container: &NodeContainer, parent: Option<ParentPosition>) -> Result<Self, DiffError> {
-        let native_name = node.native_name.clone().ok_or(DiffError::NonNative(node.id))?;
+    pub fn new(node: &NativeView, parent: Option<ParentPosition>) -> Self {
         let callbacks: Vec<SetListener> = node.callbacks.iter()
-            .filter_map(|cid| container.get_callback(cid))
-            .filter_map(|c| SetListener::may_from(c))
+            .map(|c| SetListener::from(c))
             .collect();
 
+        let node = node.node;
         let attributes = node.attributes.clone();
-        Ok(Self {
+        Self {
             parent,
             node_id: node.id,
-            native_name,
+            native_name: node.native_name.clone(),
             callbacks,
             attributes,
-        })
+        }
     }
 }
-
+#[derive(Debug,Clone,Copy)]
 pub struct ParentPosition {
     pub parent: NodeId,
     pub index: u64,
 }
 
 impl SwapNode {
-    pub fn new(original: NodeId, node: &StrippedNode, container: &NodeContainer, parent: Option<ParentPosition>) -> Result<Self, DiffError> {
-        let new = AddNode::new(node, container, parent)?;
-        Ok(Self {
+    pub fn new(original: NodeId, node: &NativeView, parent: Option<ParentPosition>) -> Self {
+        let new = AddNode::new(node, parent);
+        Self {
             original,
             new,
-        })
+        }
     }
 }

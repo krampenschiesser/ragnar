@@ -2,9 +2,10 @@ use std::any::Any;
 
 use downcast_rs::{Downcast, impl_downcast};
 
-use crate::playground1::callback::{Callback};
+use crate::playground1::callback::{LocalCallback};
 
 use crate::playground1::node::Node;
+use crate::playground1::node::local_node::LocalNode;
 
 pub trait LocalEvent: Downcast {}
 impl_downcast!(LocalEvent);
@@ -14,23 +15,23 @@ impl LocalEvent for () {}
 pub trait LocalComponent: LocalComponentWrapper {
     type Msg: LocalEvent;
 
-    fn render(self) -> Node;
+    fn render(self) -> LocalNode;
 
     fn update(&self, msg: &Self::Msg) -> UpdateResult<Self>;
 
-    fn create_local_callback<In>(callback: Box<dyn Fn(&In) -> Self::Msg>) -> Callback<In, Self::Msg> {
-        Callback::new_local(callback)
+    fn create_local_callback<In>(callback: Box<dyn Fn(&In) -> Self::Msg>) -> LocalCallback<In, Self::Msg> {
+        LocalCallback::new(callback)
     }
 }
 
 pub enum UpdateResult<T: LocalComponent + ?Sized> {
-    NewRender(Node),
+    NewRender(LocalNode),
     NewState(Box<T>),
     Keep,
 }
 
-impl<T: LocalComponent> From<Node> for UpdateResult<T> {
-    fn from(n: Node) -> Self {
+impl<T: LocalComponent> From<LocalNode> for UpdateResult<T> {
+    fn from(n: LocalNode) -> Self {
         UpdateResult::NewRender(n)
     }
 }
@@ -65,7 +66,7 @@ impl<T: LocalComponent + 'static> LocalComponentWrapper for T {
 
 pub enum LocalHandleResult {
     NewState(Box<dyn LocalComponentWrapper>),
-    NewRender(Node),
+    NewRender(LocalNode),
     Keep,
 }
 

@@ -1,6 +1,7 @@
 use crate::playground1::app_component::{AppComponent, AppEvent, AppState};
 use crate::playground1::callback::TypedInputCallbackRef;
-use crate::playground1::node::{Node, TypedNode};
+use crate::playground1::node::{Node};
+use crate::playground1::node::app_node::AppNode;
 
 pub struct NestedModuleLocalState {}
 
@@ -21,7 +22,7 @@ impl AppComponent for MyNestedModuleComponent {
     type Msg = NestedModuleLocalMsg;
     type State = NestedModuleLocalState;
 
-    fn render(&self, state: &Self::State) -> TypedNode<Self::Msg> {
-        TypedNode::empty().into()
+    fn render(&self, state: &Self::State) -> AppNode<Self::Msg> {
+        AppNode::empty().into()
     }
 }

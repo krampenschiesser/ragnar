@@ -3,6 +3,7 @@ use crate::playground1::example::counter::native::{Button, ClickEvent, Div};
 use crate::playground1::local_component::{LocalComponent, LocalEvent, UpdateResult};
 use crate::playground1::native_component::NativeComponent;
 use crate::playground1::node::{Node};
+use crate::playground1::node::local_node::LocalNode;
 
 pub struct IncDecWidget {
     pub count: u32,
@@ -19,7 +20,7 @@ impl LocalEvent for IncDecMsg {}
 impl LocalComponent for IncDecWidget {
     type Msg = IncDecMsg;
 
-    fn render(self) -> Node {
+    fn render(self) -> LocalNode {
         let increment_callback = Self::create_local_callback(Box::new(|_click: &ClickEvent| {
             IncDecMsg::Increment
         }));
@@ -36,12 +37,12 @@ impl LocalComponent for IncDecWidget {
         };
 
         let mut children = Vec::new();
-        children.push(increment.render());
-        children.push(decrement.render());
+        children.push(increment.render().into());
+        children.push(decrement.render().into());
         let div = Div {
             children,
         };
-        Node::empty().with_child(div.render()).with_local_component(self).with_callback(increment_callback).with_callback(decrement_callback)
+        LocalNode::new(self).with_child(div.render()).with_callback(increment_callback).with_callback(decrement_callback)
     }
 
 
