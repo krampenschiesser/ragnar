@@ -1,7 +1,7 @@
-use crate::playground1::node::NodeId;
-use crate::playground1::runtime::diff::DiffError;
+
+
 use crate::playground1::runtime::diff::operations::{AddNode, DiffOperation, ParentPosition};
-use crate::playground1::runtime::node_container::{NativeView, NodeContainer};
+use crate::playground1::runtime::node_container::{NativeView};
 
 pub struct InitialAddDiff<'a> {
     container: &'a NativeView<'a>,
@@ -17,7 +17,7 @@ impl<'a> InitialAddDiff<'a> {
 
     fn add_node(&self, native_view: &NativeView, parent: Option<ParentPosition>, diff_ops: &mut Vec<DiffOperation>) {
         diff_ops.push(DiffOperation::AddNode(AddNode::new(native_view, parent)));
-        native_view.children.iter().enumerate().map(|(i, c)| {
+        native_view.children.iter().enumerate().for_each(|(i, c)| {
             self.add_node(c, Some(ParentPosition { parent: native_view.node.id, index: i as u64 }), diff_ops)
         });
     }

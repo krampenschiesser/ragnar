@@ -2,7 +2,7 @@ use crate::playground1::callback::TypedInputCallbackRef;
 use crate::playground1::example::counter::native::{Button, ClickEvent, Div};
 use crate::playground1::local_component::{LocalComponent, LocalEvent, UpdateResult};
 use crate::playground1::native_component::NativeComponent;
-use crate::playground1::node::{Node};
+
 use crate::playground1::node::local_node::LocalNode;
 
 pub struct IncDecWidget {

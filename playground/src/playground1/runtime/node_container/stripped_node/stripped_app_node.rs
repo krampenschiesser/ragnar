@@ -1,9 +1,9 @@
 use std::rc::Rc;
 
-use crate::playground1::app_component::AppEvent;
+
 use crate::playground1::callback::{AppCallbackWrapper, CallbackId};
 use crate::playground1::node::{Node, NodeId};
-use crate::playground1::node::app_node::{AppNode, Converter, UntypedAppNode};
+use crate::playground1::node::app_node::{Converter, UntypedAppNode};
 use crate::playground1::runtime::node_container::stripped_node::StrippedNode;
 
 pub struct StrippedAppNode {

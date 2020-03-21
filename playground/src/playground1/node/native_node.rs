@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use crate::playground1::attribute::Attribute;
 use crate::playground1::callback::NativeCallbackWrapper;
 use crate::playground1::INCREMENTER;
-use crate::playground1::native_component::{NativeComponent, NativeComponentWrapper};
+
 use crate::playground1::node::{Node,  NodeId};
 
 pub struct NativeNode {

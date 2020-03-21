@@ -2,7 +2,7 @@ use std::any::Any;
 
 use crate::playground1::app_component::{AppComponent, AppEvent, AppState};
 use crate::playground1::callback::{AppCallbackWrapper, CallbackId, LocalCallbackWrapper, NativeCallbackWrapper};
-use crate::playground1::local_component::{LocalComponentWrapper, LocalHandleResult};
+use crate::playground1::local_component::{LocalHandleResult};
 use crate::playground1::native_component::NativeEvent;
 use crate::playground1::node::app_node::UntypedAppNode;
 use crate::playground1::node::NodeId;
@@ -32,7 +32,7 @@ impl<C: AppComponent<State=State, Msg=Msg>, State: AppState, Msg: AppEvent> Runt
         if state_changes.is_empty() {
             let mut diff_ops = Vec::new();
             let changed_nodes = self.update_local_nodes(node_updates);
-            for (new_node_id, old_container, parent) in changed_nodes {
+            for (new_node_id, old_container, _parent) in changed_nodes {
                 let old_native_view = old_container.native_view(None);
                 let new_native_view = self.root.native_view(Some(new_node_id));
                 let diff = CompleteDiff::new(&old_native_view, &new_native_view);

@@ -1,7 +1,7 @@
 use crate::playground1::app_component::{AppComponent, AppEvent, AppState};
 use crate::playground1::callback::TypedInputCallbackRef;
 use crate::playground1::example::module::module1::nested_module::{MyNestedModuleComponent, NestedModuleLocalMsg, NestedModuleLocalState};
-use crate::playground1::node::{Node};
+
 use crate::playground1::node::app_node::AppNode;
 
 mod nested_module;

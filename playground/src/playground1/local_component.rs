@@ -4,7 +4,7 @@ use downcast_rs::{Downcast, impl_downcast};
 
 use crate::playground1::callback::{LocalCallback};
 
-use crate::playground1::node::Node;
+
 use crate::playground1::node::local_node::LocalNode;
 
 pub trait LocalEvent: Downcast {}

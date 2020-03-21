@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use crate::playground1::app_component::AppEvent;
-use crate::playground1::callback::{AppCallbackWrapper, CallbackWrapper};
+use crate::playground1::callback::{AppCallbackWrapper};
 use crate::playground1::INCREMENTER;
 use crate::playground1::node::{Node, NodeId};
 
