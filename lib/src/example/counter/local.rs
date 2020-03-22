@@ -43,6 +43,18 @@ impl LocalComponent for IncDecWidget {
             children,
         };
         LocalNode::new(self).with_child(div.render()).with_callback(increment_callback).with_callback(decrement_callback)
+
+        //<div>
+        //  <button on_click={|_click: &ClickEvent| IncDecMsg:::Increment}>increment</button>
+        //  <button on_click={|_click: &ClickEvent| IncDecMsg:::Decrement}>{format!("{}","decrement")}</button>
+        //</div>
+        //
+        //
+        //
+        //
+        //
+        //
+        //
     }
 
 

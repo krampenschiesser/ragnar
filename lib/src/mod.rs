@@ -7,7 +7,6 @@ mod native_component;
 mod node;
 mod runtime;
 mod attribute;
-mod module;
 
 mod example;
 

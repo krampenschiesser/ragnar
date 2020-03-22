@@ -6,7 +6,6 @@
 #[macro_use]
 extern crate log;
 
-mod playground1;
 
 /**
 pub use dom::DomElement;
