@@ -1,0 +1,68 @@
+File = {
+	(Module|StructDef | ANY)*
+}
+
+Module = {
+	FeatureGate? ~
+	"pub"? ~ Whitespace* ~ "mod " ~ Identifier ~";"
+}
+
+StructDef = {
+	Whitespace* ~FeatureGate? ~ Whitespace* ~
+    Whitespace* ~DeriveComponent ~ Whitespace* ~
+	Whitespace* ~"pub"? ~ Whitespace* ~ "struct " ~ Identifier ~ Whitespace+ ~"{"~Whitespace*
+    ~ (Whitespace* ~ Attribute ~ Whitespace*)*  ~ "}"
+}
+
+DeriveComponent = _{
+	Whitespace* ~ "#[derive(" ~
+    (!"Component" ~ ANY)* ~
+    "Component" ~
+    (!")]" ~ ANY)* ~
+    ")]"
+}
+
+
+FeatureGate = {
+    "#[cfg(feature"~Whitespace*~"="~Whitespace*~"\"" ~ FeatureName ~"\")]" ~ NewLineBetween
+}
+
+FeatureName = {
+	(!")" ~ ASCII_ALPHANUMERIC)+
+}
+
+Attribute = {
+    FeatureGate? ~ AttributePrefix? ~ Identifier ~ ":" ~ " "* ~ AttributeValue ~ ","
+}
+
+AttributePrefix = {
+    Required | Default
+}
+
+Required = {
+    "#[required]" ~ Whitespace*
+}
+Default = {
+    "#[default("~ AnyCode ~")]" ~ NewLineBetween
+}
+
+AnyCode = {
+	(!")]" ~ ANY)+
+}
+
+
+NewLineBetween =  _{
+    Whitespace*
+}
+
+AttributeValue = {
+    (ASCII_ALPHA+| "&'") ~ (ASCII_ALPHANUMERIC| "<" | ">" | "&" |"'"|" ")*
+}
+
+Identifier = {
+    ( ASCII_ALPHANUMERIC | "_" )+
+}
+
+Whitespace = _{
+    " "| "\t" | "\r" | "\n"
+}
