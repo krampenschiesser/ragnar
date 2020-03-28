@@ -34,7 +34,7 @@ pub fn scan_dir(path: &Path) -> Result<ComponentRegistry, ParseError> {
             });
 
             for module in modules {
-                let new_path = format!("{}.{}", path, module.name);
+                let new_path = if path.is_empty(){module.name.clone()}else{format!("{}.{}", path, module.name)};
                 let parent = file.parent().ok_or(ParseError::NoParentFound)?;
                 let modfile = parent.join(format!("{}.rs", &module.name));
                 if modfile.exists() {

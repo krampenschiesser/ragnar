@@ -2,6 +2,7 @@ use std::borrow::Cow;
 
 use crate::FeatureFlag;
 
+#[derive(Debug)]
 pub struct ComponentRegistry {
     pub components: Vec<RegisteredComponent>,
 }
@@ -26,6 +27,7 @@ pub struct Attribute {
     pub features: Vec<FeatureFlag>,
 }
 
+#[derive(Debug)]
 pub struct ComponentFeatureView<'a> {
     qualified_name: &'a str,
     simple_name: &'a str,

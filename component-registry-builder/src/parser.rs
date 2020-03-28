@@ -184,6 +184,13 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_parse_file() {
+        let str: &'static str = include_str!("test_data2.rs");
+        let parse_result = RustSourceParser::parse_data(str).unwrap();
+        assert_eq!(1, parse_result.components.len());
+    }
+
+    #[test]
     fn test_parse_test_data() {
         let str: &'static str = include_str!("test_data.rs");
         RustSourceParser::parse(Rule::File, str).unwrap();
@@ -216,9 +223,9 @@ mod tests {
         let attribute3 = component.optional_attributes.iter().find(|p| p.name == Cow::Borrowed("attribute_android")).unwrap();
         assert_eq!(attribute3.value, "String");
         assert_eq!(attribute3.default_code, None);
-        assert_eq!(attribute3.features.len(),1);
-        let flag= attribute3.features.get(0).unwrap();
-        assert_eq!(flag.0.as_str(),"android");
+        assert_eq!(attribute3.features.len(), 1);
+        let flag = attribute3.features.get(0).unwrap();
+        assert_eq!(flag.0.as_str(), "android");
     }
 
     #[test]

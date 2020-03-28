@@ -1,19 +1,17 @@
 File = {
-	(Module|StructDef | ANY)*
+	((Module | StructDef) | (!(Module | StructDef) ~ ANY) )*
 }
-
 Module = {
 	FeatureGate? ~
-	"pub"? ~ Whitespace* ~ "mod " ~ Identifier ~";"
+	"pub"? ~ Whitespace* ~ "mod" ~ Whitespace* ~ Identifier ~";"
 }
-
 StructDef = {
 	Whitespace* ~FeatureGate? ~ Whitespace* ~
     Whitespace* ~DeriveComponent ~ Whitespace* ~
-	Whitespace* ~"pub"? ~ Whitespace* ~ "struct " ~ Identifier ~ Whitespace+ ~"{"~Whitespace*
-    ~ (Whitespace* ~ Attribute ~ Whitespace*)*  ~ "}"
+	Whitespace* ~ Pub? ~ Whitespace* ~ "struct " ~ Identifier ~ Whitespace+ ~"{"~Whitespace*
+    ~ ((Whitespace* ~ Attribute ~ Whitespace*)| (!"}" ~ ANY))*
+    ~ "}"
 }
-
 DeriveComponent = _{
 	Whitespace* ~ "#[derive(" ~
     (!"Component" ~ ANY)* ~
@@ -21,48 +19,21 @@ DeriveComponent = _{
     (!")]" ~ ANY)* ~
     ")]"
 }
-
-
 FeatureGate = {
     "#[cfg(feature"~Whitespace*~"="~Whitespace*~"\"" ~ FeatureName ~"\")]" ~ NewLineBetween
 }
-
-FeatureName = {
-	(!")" ~ ASCII_ALPHANUMERIC)+
-}
-
+FeatureName = {	(!")" ~ ASCII_ALPHANUMERIC)+ }
 Attribute = {
-    FeatureGate? ~ AttributePrefix? ~ Identifier ~ ":" ~ " "* ~ AttributeValue ~ ","
+    FeatureGate? ~ AttributePrefix? ~ Pub? ~ Identifier ~ ":" ~ " "* ~ AttributeValue ~ ","
 }
-
-AttributePrefix = {
-    Required | Default
-}
-
-Required = {
-    "#[required]" ~ Whitespace*
-}
-Default = {
-    "#[default("~ AnyCode ~")]" ~ NewLineBetween
-}
-
-AnyCode = {
-	(!")]" ~ ANY)+
-}
-
-
-NewLineBetween =  _{
-    Whitespace*
-}
-
+Pub = _{	("pub"|"pub(crate)") ~ Whitespace+ }
+AttributePrefix = { Required | Default }
+Required = { "#[required]" ~ Whitespace* }
+Default = { "#[default("~ AnyCode ~")]" ~ NewLineBetween }
+AnyCode = {	(!")]" ~ ANY)+ }
+NewLineBetween =  _{ Whitespace* }
 AttributeValue = {
     (ASCII_ALPHA+| "&'") ~ (ASCII_ALPHANUMERIC| "<" | ">" | "&" |"'"|" ")*
 }
-
-Identifier = {
-    ( ASCII_ALPHANUMERIC | "_" )+
-}
-
-Whitespace = _{
-    " "| "\t" | "\r" | "\n"
-}
+Identifier = { ( ASCII_ALPHANUMERIC | "_" )+ }
+Whitespace = _{ " "| "\t" | "\r" | "\n" }

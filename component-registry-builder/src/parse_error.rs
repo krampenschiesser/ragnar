@@ -59,3 +59,9 @@ impl From<std::io::Error> for ParseError {
         ParseError::IoError { source: e }
     }
 }
+
+impl ParseError {
+    pub fn get_backtrace(&self) -> String {
+        format!("{:?}", self.backtrace())
+    }
+}
