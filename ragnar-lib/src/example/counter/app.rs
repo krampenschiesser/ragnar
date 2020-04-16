@@ -1,7 +1,7 @@
-use crate::app_component::{AppComponent, AppEvent, AppState};
+use crate::app_component::{AppComponent, AppEvent, AppState, AppContext};
 use crate::example::counter::local::IncDecWidget;
 use crate::example::counter::native::Label;
-use crate::local_component::LocalComponent;
+use crate::local_component::{LocalComponent, LocalContext};
 
 use crate::node::app_node::AppNode;
 
@@ -26,18 +26,18 @@ impl AppComponent for App {
     type Msg = StateChange;
     type State = State;
 
-    fn render(&self, state: &Self::State) -> AppNode<Self::Msg> {
+    fn render(&self, state: &Self::State, mut ctx: AppContext<Self::Msg>) -> AppNode<Self::Msg> {
         let _label = Label { text: format!("Clicked: {}", state.count).into() };
 
-        let callback = Self::create_app_callback(Box::new(|value: &u32| {
+        let callback = ctx.create_callback(Box::new(|value: &u32| {
             StateChange::NewCount(*value)
         }));
 
         let widget = IncDecWidget {
             count: state.count,
-            on_change: callback.get_input_ref(),
+            on_change: callback.into(),
         };
 
-        AppNode::empty().with_callback(callback).with_child(widget.render()).into()
+        AppNode::empty(ctx).with_child(widget.render(LocalContext::new())).into()
     }
 }

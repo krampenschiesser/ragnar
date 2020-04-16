@@ -5,7 +5,7 @@ use crate::attribute::Attribute;
 use crate::callback::{CallbackId, NativeCallbackWrapper};
 use crate::node::NodeId;
 
-use crate::runtime::node_container::{NativeView};
+use crate::runtime::node_container::NativeView;
 
 
 pub struct SetAttribute {
@@ -38,6 +38,7 @@ pub struct AddNode {
     pub parent: Option<ParentPosition>,
     pub node_id: NodeId,
     pub native_name: Cow<'static, str>,
+    pub text: Option<Cow<'static, str>>,
     pub callbacks: Vec<SetListener>,
     pub attributes: HashMap<Cow<'static, str>, Attribute>,
 }
@@ -77,22 +78,38 @@ impl SetListener {
 
 impl AddNode {
     pub fn new(node: &NativeView, parent: Option<ParentPosition>) -> Self {
-        let callbacks: Vec<SetListener> = node.callbacks.iter()
-            .map(|c| SetListener::from(c))
-            .collect();
+        match node {
+            NativeView::Node(node) => {
+                let callbacks: Vec<SetListener> = node.callbacks.iter()
+                    .map(|c| SetListener::from(c))
+                    .collect();
 
-        let node = node.node;
-        let attributes = node.attributes.clone();
-        Self {
-            parent,
-            node_id: node.id,
-            native_name: node.native_name.clone(),
-            callbacks,
-            attributes,
+                let node = node.node;
+                let attributes = node.attributes.clone();
+                Self {
+                    parent,
+                    node_id: node.id,
+                    native_name: node.native_name.clone(),
+                    text: None,
+                    callbacks,
+                    attributes,
+                }
+            }
+            NativeView::Text(text) => {
+                Self {
+                    parent,
+                    node_id: text.id,
+                    native_name: "".into(),
+                    text: Some(text.text.clone()),
+                    callbacks: Vec::with_capacity(0),
+                    attributes: HashMap::with_capacity(0),
+                }
+            }
         }
     }
 }
-#[derive(Debug,Clone,Copy)]
+
+#[derive(Debug, Clone, Copy)]
 pub struct ParentPosition {
     pub parent: NodeId,
     pub index: u64,

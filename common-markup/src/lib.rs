@@ -1,3 +1,9 @@
+mod common;
+
+#[cfg(feature = "web")]
+mod html;
+
+
 #[cfg(test)]
 mod tests {
     #[test]

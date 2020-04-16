@@ -1,8 +1,8 @@
 use std::any::Any;
 
-use crate::app_component::{AppComponent, AppEvent, AppState};
+use crate::app_component::{AppComponent, AppEvent, AppState, AppContext};
 use crate::callback::{AppCallbackWrapper, CallbackId, LocalCallbackWrapper, NativeCallbackWrapper};
-use crate::local_component::{LocalHandleResult};
+use crate::local_component::LocalHandleResult;
 use crate::native_component::NativeEvent;
 use crate::node::app_node::UntypedAppNode;
 use crate::node::NodeId;
@@ -85,7 +85,7 @@ impl<C: AppComponent<State=State, Msg=Msg>, State: AppState, Msg: AppEvent> Runt
                 (self.update_function)(&mut self.state, event);
             }
         }
-        self.root_component.render(&self.state).into()
+        self.root_component.render(&self.state, AppContext::new()).into()
     }
 
 
@@ -101,7 +101,7 @@ impl<C: AppComponent<State=State, Msg=Msg>, State: AppState, Msg: AppEvent> Runt
     fn execute_native_callback(&self, callback: &NativeCallbackWrapper, event: Box<dyn NativeEvent>, handling_result: &mut EventHandlingResult) -> Result<(), DiffError> {
         if let Some(output) = (callback.callback)(event) {
             if callback.chained.is_empty() {
-                warn!("Native callback is not chained, its output will be lost. Callback={:?}, node={:?}",callback.id, callback.node_id);
+                warn!("Native callback is not chained, its output will be lost. Callback={:?}, node={:?}", callback.id, callback.node_id);
             } else {
                 for other in &callback.chained {
                     self.execute_callback(*other, &output, handling_result)?;
@@ -123,16 +123,21 @@ impl<C: AppComponent<State=State, Msg=Msg>, State: AppState, Msg: AppEvent> Runt
         Ok(())
     }
     fn execute_app_callback(&self, callback: &AppCallbackWrapper, event: &Box<dyn Any>, handling_result: &mut EventHandlingResult) -> Result<(), DiffError> {
-        if let Some(output) = (callback.callback)(event) {
-            if callback.chained.is_empty() {
-                handling_result.add_app(output);
-            } else {
-                for other in &callback.chained {
-                    self.execute_callback(*other, &output, handling_result)?;
+        let handler = callback.callback.replace(None);
+        if let Some(handler) = handler {
+            if let Some(output) = (handler)(event) {
+                if callback.chained.is_empty() {
+                    handling_result.add_app(output);
+                } else {
+                    for other in &callback.chained {
+                        self.execute_callback(*other, &output, handling_result)?;
+                    }
                 }
             }
+            Ok(())
+        } else {
+            Err(DiffError::HandlerAlreadyUsed(callback.id, callback.node_id))?
         }
-        Ok(())
     }
 }
 

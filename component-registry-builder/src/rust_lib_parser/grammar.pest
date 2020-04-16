@@ -1,5 +1,17 @@
 File = {
-	((Module | StructDef) | (!(Module | StructDef) ~ ANY) )*
+	((Module | StructDef | ComponentImpl) | (!(Module | StructDef| ComponentImpl) ~ ANY) )*
+}
+ComponentImpl = {
+	Whitespace* ~ "impl "~(Native | App|Local) ~"Component for "~ Identifier ~ Whitespace* ~ "{"
+}
+Native = {
+	"Native"
+}
+App = {
+	"App"
+}
+Local = {
+	"Local"
 }
 Module = {
 	FeatureGate? ~
@@ -24,13 +36,16 @@ FeatureGate = {
 }
 FeatureName = {	(!")" ~ ASCII_ALPHANUMERIC)+ }
 Attribute = {
-    FeatureGate? ~ AttributePrefix? ~ Pub? ~ Identifier ~ ":" ~ " "* ~ AttributeValue ~ ","
+    FeatureGate? ~ (Rename| Delegated)? ~ AttributePrefix? ~ (Rename| Delegated)?  ~ Pub? ~ Identifier ~ ":" ~ " "* ~ AttributeValue ~ ","
 }
 Pub = _{	("pub"|"pub(crate)") ~ Whitespace+ }
 AttributePrefix = { Required | Default }
 Required = { "#[required]" ~ Whitespace* }
 Default = { "#[default("~ AnyCode ~")]" ~ NewLineBetween }
+Rename = { "#[rename(\""~ AnyString ~"\")]" ~ NewLineBetween }
+Delegated = { "#[delegated]" ~ NewLineBetween }
 AnyCode = {	(!")]" ~ ANY)+ }
+AnyString = {	(!"\")]" ~ ANY)+ }
 NewLineBetween =  _{ Whitespace* }
 AttributeValue = {
     (ASCII_ALPHA+| "&'") ~ (ASCII_ALPHANUMERIC| "<" | ">" | "&" |"'"|" ")*

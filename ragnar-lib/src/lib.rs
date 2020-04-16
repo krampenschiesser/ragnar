@@ -1,5 +1,8 @@
+#![feature(vec_remove_item)]
 #[macro_use]
 extern crate log;
+#[macro_use]
+extern crate lazy_static;
 
 use std::sync::atomic::{AtomicU64, Ordering};
 
@@ -10,12 +13,16 @@ mod native_component;
 mod node;
 mod runtime;
 mod attribute;
-
 mod example;
+mod component;
 
-pub static INCREMENTER: Incrementer = Incrementer { counter: AtomicU64::new(0) };
+mod prelude;
+pub use prelude::*;
 
-pub struct Incrementer {
+
+pub(crate) static INCREMENTER: Incrementer = Incrementer { counter: AtomicU64::new(0) };
+
+pub(crate) struct Incrementer {
     counter: AtomicU64,
 }
 

@@ -1,18 +1,18 @@
-
-
 use std::collections::HashMap;
 use std::rc::Rc;
 
 
 use crate::callback::{AppCallbackWrapper, CallbackId, LocalCallbackWrapper, NativeCallbackWrapper};
 use crate::local_component::LocalComponentWrapper;
-use crate::node::{Node, NodeId};
+use crate::node::{Node, NodeId, TextNode};
 use crate::node::app_node::{Converter, UntypedAppNode};
 use crate::node::local_node::LocalNode;
 use crate::node::native_node::NativeNode;
 
 use crate::runtime::diff::operations::ParentPosition;
 use crate::runtime::node_container::stripped_node::{StrippedAppNode, StrippedLocalNode, StrippedNativeNode, StrippedNode};
+use std::borrow::Cow;
+use crate::Attribute;
 
 pub mod stripped_node;
 
@@ -20,6 +20,7 @@ pub struct NodeContainer {
     pub app_nodes: HashMap<NodeId, StrippedAppNode>,
     pub local_nodes: HashMap<NodeId, StrippedLocalNode>,
     pub native_nodes: HashMap<NodeId, StrippedNativeNode>,
+    pub text_nodes: HashMap<NodeId, TextNode>,
 
     pub local_callbacks: HashMap<CallbackId, LocalCallbackWrapper>,
     pub native_callbacks: HashMap<CallbackId, NativeCallbackWrapper>,
@@ -35,6 +36,7 @@ impl NodeContainer {
             app_nodes: HashMap::new(),
             local_nodes: HashMap::new(),
             native_nodes: HashMap::new(),
+            text_nodes: HashMap::new(),
             local_callbacks: HashMap::new(),
             native_callbacks: HashMap::new(),
             app_callbacks: HashMap::new(),
@@ -46,6 +48,7 @@ impl NodeContainer {
             app_nodes: HashMap::new(),
             local_nodes: HashMap::new(),
             native_nodes: HashMap::new(),
+            text_nodes: HashMap::new(),
             app_callbacks: HashMap::new(),
             local_callbacks: HashMap::new(),
             native_callbacks: HashMap::new(),
@@ -68,12 +71,12 @@ impl NodeContainer {
         } else if let Some(node) = self.native_nodes.get(&node_id) {
             let views: Vec<_> = node.children.iter().flat_map(|c| self.get_native_nodes(c).into_iter()).collect();
             let callbacks = node.callbacks.iter().filter_map(|cid| self.native_callbacks.get(cid)).collect();
-            let view = NativeView {
+            let view = NativeNodeView {
                 node,
                 callbacks,
                 children: views,
             };
-            vec![view]
+            vec![NativeView::Node(view)]
         } else {
             Vec::with_capacity(0)
         }
@@ -112,11 +115,17 @@ impl NodeContainer {
         self.native_nodes.insert(node.id, node);
     }
 
+
+    fn add_text_node(&mut self, node: TextNode) {
+        self.text_nodes.insert(node.id, node);
+    }
+
     fn add_node(&mut self, node: Node, parent: Option<NodeId>, converters: Option<Vec<Rc<Converter>>>) {
         match node {
             Node::Local(node) => self.add_local_node(node, parent, converters),
             Node::Native(node) => self.add_native_node(node, parent, converters),
             Node::App(node) => self.add_app_node(node, parent, converters),
+            Node::Text(node) => self.add_text_node(node),
         }
     }
 
@@ -226,8 +235,53 @@ impl NodeContainer {
     }
 }
 
-pub struct NativeView<'a> {
+pub enum NativeView<'a> {
+    Node(NativeNodeView<'a>),
+    Text(TextNode),
+}
+
+pub struct NativeNodeView<'a> {
     pub node: &'a StrippedNativeNode,
     pub callbacks: Vec<&'a NativeCallbackWrapper>,
     pub children: Vec<NativeView<'a>>,
+}
+
+impl<'a> NativeView<'a> {
+    pub fn get_id(&self) -> &NodeId {
+        match self {
+            NativeView::Text(t) => &t.id,
+            NativeView::Node(n) => &n.node.id,
+        }
+    }
+
+    pub fn get_native_name(&self) -> &str {
+        match self {
+            NativeView::Text(t) => "",
+            NativeView::Node(n) => &n.node.native_name,
+        }
+    }
+
+    pub fn get_children(&self) -> &[NativeView<'a>] {
+        match self {
+            NativeView::Text(t) => &[],
+            NativeView::Node(n) => &n.children,
+        }
+    }
+
+    pub fn get_attributes(&self) -> &HashMap<Cow<'static, str>, Attribute> {
+        match self {
+            NativeView::Text(t) => &EMPTY_ATTRIBUTES,
+            NativeView::Node(n) => &n.node.attributes,
+        }
+    }
+    pub fn get_callbacks(&self) -> &[&'a NativeCallbackWrapper] {
+        match self {
+            NativeView::Text(t) => &[],
+            NativeView::Node(n) => &n.callbacks,
+        }
+    }
+}
+
+lazy_static! {
+    static ref EMPTY_ATTRIBUTES: HashMap<Cow<'static, str>, Attribute> = HashMap::with_capacity(0);
 }

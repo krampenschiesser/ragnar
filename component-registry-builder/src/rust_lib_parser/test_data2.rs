@@ -21,7 +21,7 @@ pub struct Li {
 }
 
 impl NativeComponent for Li {
-    fn render(self) -> NativeNode {
+    fn render(self, ctx: NativeContext) -> NativeNode {
         NativeNode::new("li")
             .set_if("style",self.style)
             .set_if("class",self.class)

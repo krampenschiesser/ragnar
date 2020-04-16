@@ -1,4 +1,4 @@
-#[derive(Debug, Eq, PartialEq, Hash, Clone)]
+#[derive(Debug, Eq, PartialEq, Hash, Clone,serde::Serialize,serde::Deserialize)]
 pub struct FeatureFlag(pub String);
 
 impl<'a> From<&'a str> for FeatureFlag {

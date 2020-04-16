@@ -17,8 +17,8 @@ impl<'a> InitialAddDiff<'a> {
 
     fn add_node(&self, native_view: &NativeView, parent: Option<ParentPosition>, diff_ops: &mut Vec<DiffOperation>) {
         diff_ops.push(DiffOperation::AddNode(AddNode::new(native_view, parent)));
-        native_view.children.iter().enumerate().for_each(|(i, c)| {
-            self.add_node(c, Some(ParentPosition { parent: native_view.node.id, index: i as u64 }), diff_ops)
+        native_view.get_children().iter().enumerate().for_each(|(i, c)| {
+            self.add_node(c, Some(ParentPosition { parent: *native_view.get_id(), index: i as u64 }), diff_ops)
         });
     }
 }

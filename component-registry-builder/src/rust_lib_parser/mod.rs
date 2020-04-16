@@ -1,14 +1,11 @@
 use pest::Parser;
 use crate::FeatureFlag;
-use pest::iterators::{Pair, Pairs};
+use pest::iterators::Pairs;
 use crate::parse_error::ParseError;
-use crate::component_registry::{RegisteredComponent, Attribute};
-use std::process::id;
-use pest::error::ErrorVariant::ParsingError;
-use std::borrow::Cow;
+use crate::component_registry::{RegisteredComponent, Attribute, RenderType};
 
 #[derive(Parser)]
-#[grammar = "grammar.pest"]
+#[grammar = "rust_lib_parser/grammar.pest"]
 pub struct RustSourceParser;
 
 pub struct DeclaredModule {
@@ -21,12 +18,18 @@ pub struct ParseResult {
     pub components: Vec<RegisteredComponent>,
 }
 
+pub struct ComponentImplementation {
+    pub render_type: RenderType,
+    pub name: String,
+}
+
 impl RustSourceParser {
     pub fn parse_data(data: &str) -> Result<ParseResult, ParseError> {
         let mut parse_result = ParseResult {
             modules: Vec::new(),
             components: Vec::new(),
         };
+        let mut impls: Vec<ComponentImplementation> = Vec::new();
 
         let parsed: pest::iterators::Pairs<Rule> = RustSourceParser::parse(Rule::File, data)?;
         for p in parsed.into_iter().next().ok_or(ParseError::NoFileContent)?.into_inner() {
@@ -40,10 +43,50 @@ impl RustSourceParser {
                     let component = parse_struct(p.into_inner())?;
                     parse_result.components.push(component);
                 }
+                Rule::ComponentImpl => {
+                    let my_impl = parse_impl(p.into_inner())?;
+                    impls.push(my_impl);
+                }
                 _ => {}
             }
         };
+        for implementation in impls {
+            if let Some(component) = parse_result.components.iter_mut().find(|c|c.simple_name == implementation.name) {
+                component.render_type = implementation.render_type
+            }
+        }
         Ok(parse_result)
+    }
+}
+
+fn parse_impl(pairs: Pairs<Rule>) -> Result<ComponentImplementation, ParseError> {
+    let mut render_type = RenderType::None;
+    let mut identifier = None;
+
+    for p in pairs {
+        match p.as_rule() {
+            Rule::App => {
+                render_type = RenderType::App;
+            }
+            Rule::Local => {
+                render_type = RenderType::Local;
+            }
+            Rule::Native => {
+                render_type = RenderType::Native;
+            }
+            Rule::Identifier => {
+                identifier = Some(p.as_str());
+            }
+            _ => Err(ParseError::InvalidComponentImplContent(p.as_str().into()))?
+        }
+    }
+    if let Some (identifier) = identifier {
+        Ok(ComponentImplementation {
+            name: identifier.into(),
+            render_type,
+        })
+    }else {
+        Err(ParseError::NoIdentifier)
     }
 }
 
@@ -113,10 +156,11 @@ fn parse_struct(pairs: Pairs<Rule>) -> Result<RegisteredComponent, ParseError> {
         }
         Ok(RegisteredComponent {
             qualified_name: "".into(),
-            simple_name: Cow::Owned(identifier.into()),
+            simple_name: identifier.into(),
             required_attributes,
             optional_attributes,
             features,
+            render_type: RenderType::None,
         })
     } else {
         Err(ParseError::CouldNotFindStructIdentifier)
@@ -125,10 +169,12 @@ fn parse_struct(pairs: Pairs<Rule>) -> Result<RegisteredComponent, ParseError> {
 
 fn parse_attribute(pairs: Pairs<Rule>) -> Result<Attribute, ParseError> {
     let mut required = false;
+    let mut delegated = false;
     let mut default_code: Option<String> = None;
     let mut feature_flag = None;
     let mut attribute_value = None;
     let mut attribute_identifier = None;
+    let mut rename: Option<String> = None;
 
     for p in pairs {
         match p.as_rule() {
@@ -145,6 +191,17 @@ fn parse_attribute(pairs: Pairs<Rule>) -> Result<Attribute, ParseError> {
                     _ => Err(ParseError::InvalidAttributePrefixContent(inner.as_str().into()))?,
                 }
             }
+            Rule::Rename => {
+                let inner = p.into_inner().next().ok_or(ParseError::NoContentForRename)?;
+                match inner.as_rule() {
+                    Rule::AnyString => {
+                        // panic!("inner {:?}", inner);
+                        // let inner = inner.into_inner().next().ok_or(ParseError::NoContentForRename)?;
+                        rename = Some(inner.as_str().into());
+                    }
+                    _ => Err(ParseError::InvalidAttributePrefixContent(inner.as_str().into()))?,
+                }
+            }
             Rule::Identifier => {
                 attribute_identifier = Some(p.as_str());
             }
@@ -154,17 +211,27 @@ fn parse_attribute(pairs: Pairs<Rule>) -> Result<Attribute, ParseError> {
             Rule::FeatureGate => {
                 feature_flag = parse_feature_gate(p.into_inner())?;
             }
+            Rule::Delegated => {
+                delegated = true;
+            }
             _ => Err(ParseError::InvalidAttributeContent(p.as_str().into()))?
         }
     }
     let attribute_value = attribute_value.ok_or(ParseError::NoAttributeValue)?;
-    let attribute_identifier = attribute_identifier.ok_or(ParseError::NoAttributeIdentifier)?;
+    let mut view_name: String = attribute_identifier.ok_or(ParseError::NoAttributeIdentifier)?.into();
+    let code_name: String = view_name.clone();
+    if let Some(rename) = rename {
+        view_name = rename;
+    }
+    let sub_component = if delegated { Some(attribute_value.clone().into()) } else { None };
     Ok(Attribute {
+        sub_component,
         required,
         features: feature_flag.map(|f| vec![FeatureFlag::from(f)]).unwrap_or(vec![]),
-        name: Cow::Owned(attribute_identifier.into()),
-        default_code: default_code.map(|s| Cow::from(s)),
-        value: Cow::Owned(attribute_value.into()),
+        name_view: view_name,
+        name_code: code_name,
+        default_code,
+        value: attribute_value.into(),
     })
 }
 
@@ -182,6 +249,7 @@ fn parse_feature_gate(pairs: Pairs<Rule>) -> Result<Option<&str>, ParseError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::borrow::Cow;
 
     #[test]
     fn test_parse_file() {
@@ -198,7 +266,7 @@ mod tests {
         assert_eq!(2, parse_result.modules.len());
         assert!(parse_result.modules.iter().any(|m| &m.name == "modulea"));
         assert!(parse_result.modules.iter().any(|m| &m.name == "moduleweb" && m.feature_flag == Some(FeatureFlag("web".into()))));
-        assert_eq!(2, parse_result.components.len());
+        assert_eq!(3, parse_result.components.len());
         let component_web = parse_result.components.get(0).unwrap();
         assert_eq!(component_web.simple_name, Cow::Borrowed("ComponentWeb"));
 
@@ -208,7 +276,7 @@ mod tests {
         assert_eq!(1, component.required_attributes.len());
         assert_eq!(component.required_attributes.get(0).unwrap().name, "required");
 
-        assert_eq!(3, component.optional_attributes.len());
+        assert_eq!(5, component.optional_attributes.len());
 
         let attribute1 = component.optional_attributes.iter().find(|p| p.name == Cow::Borrowed("my_rop")).unwrap();
         assert_eq!(attribute1.value, "MyStruct");
@@ -217,7 +285,7 @@ mod tests {
 
         let attribute2 = component.optional_attributes.iter().find(|p| p.name == Cow::Borrowed("props")).unwrap();
         assert_eq!(attribute2.value, "Vec<Bla>");
-        assert_eq!(attribute2.default_code, Some(Cow::Borrowed("Vec::with_capacity(0)")));
+        assert_eq!(attribute2.default_code, Some("Vec::with_capacity(0)".into()));
         assert!(attribute2.features.is_empty());
 
         let attribute3 = component.optional_attributes.iter().find(|p| p.name == Cow::Borrowed("attribute_android")).unwrap();
@@ -226,6 +294,12 @@ mod tests {
         assert_eq!(attribute3.features.len(), 1);
         let flag = attribute3.features.get(0).unwrap();
         assert_eq!(flag.0.as_str(), "android");
+
+        //renamed
+        let attribute4 = component.optional_attributes.iter().find(|p| p.name == Cow::Borrowed("blubb")).unwrap();
+
+        let attribute5 = component.optional_attributes.iter().find(|p| p.name == Cow::Borrowed("sub")).unwrap();
+        assert_eq!(attribute5.sub_component, Some(String::from("Sub")))
     }
 
     #[test]

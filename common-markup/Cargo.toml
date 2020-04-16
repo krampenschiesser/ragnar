@@ -1,0 +1,16 @@
+[package]
+name = "common-markup"
+version = "0.1.0"
+authors = ["krampenschiesser <krampenschiesser@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+default = ["web"]
+web = ["ragnar-html-markup"]
+android = ["ragnar-android-markup"]
+
+[dependencies]
+ragnar-html-markup = {path = "../html-markup", optional=true}
+ragnar-android-markup = {path = "../android-markup", optional=true}

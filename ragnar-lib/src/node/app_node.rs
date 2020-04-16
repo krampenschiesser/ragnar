@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
-use crate::app_component::AppEvent;
-use crate::callback::{AppCallbackWrapper};
+use crate::app_component::{AppEvent, AppContext};
+use crate::callback::AppCallbackWrapper;
 use crate::INCREMENTER;
 use crate::node::{Node, NodeId};
 
@@ -18,27 +18,22 @@ pub struct UntypedAppNode {
 }
 
 impl<U: AppEvent + 'static> AppNode<U> {
-    // pub(crate) fn into_node(self) -> Node {
-    //     self.node
-    // }
-    pub fn empty() -> Self {
+    pub fn empty(ctx: AppContext<U>) -> Self {
+        let id = NodeId(INCREMENTER.get_next());
+        let callbacks = ctx.into_callbacks().into_iter().map(|mut c| {
+            c.node_id = id;
+            c
+        }).collect();
         let internal = UntypedAppNode {
-            id: NodeId(INCREMENTER.get_next()),
+            id,
             children: None,
-            callbacks: Vec::with_capacity(0),
+            callbacks,
             converter: None,
         };
         Self {
             internal,
             _phantom: PhantomData,
         }
-    }
-
-    pub fn with_callback<T: Into<AppCallbackWrapper>>(mut self, t: T) -> Self {
-        let mut callback_wrapper = t.into();
-        callback_wrapper.node_id = self.internal.id;
-        self.internal.callbacks.push(callback_wrapper);
-        self
     }
 
     pub fn with_children<T: Into<Node>>(mut self, nodes: Vec<T>) -> Self {
@@ -83,6 +78,7 @@ impl<T: AppEvent + 'static> Into<Node> for AppNode<T> {
         Node::App(self.internal)
     }
 }
+
 impl Into<Node> for UntypedAppNode {
     fn into(self) -> Node {
         Node::App(self)

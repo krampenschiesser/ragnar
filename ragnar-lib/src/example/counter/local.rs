@@ -1,7 +1,7 @@
 use crate::callback::TypedInputCallbackRef;
 use crate::example::counter::native::{Button, ClickEvent, Div};
-use crate::local_component::{LocalComponent, LocalEvent, UpdateResult};
-use crate::native_component::NativeComponent;
+use crate::local_component::{LocalComponent, LocalEvent, UpdateResult, LocalContext};
+use crate::native_component::{NativeComponent, NativeContext};
 
 use crate::node::local_node::LocalNode;
 
@@ -20,45 +20,34 @@ impl LocalEvent for IncDecMsg {}
 impl LocalComponent for IncDecWidget {
     type Msg = IncDecMsg;
 
-    fn render(self) -> LocalNode {
-        let increment_callback = Self::create_local_callback(Box::new(|_click: &ClickEvent| {
+    fn render(self, mut ctx: LocalContext<Self::Msg>) -> LocalNode {
+        let increment_callback = ctx.create_callback(|_click: &ClickEvent| {
             IncDecMsg::Increment
-        }));
-        let decrement_callback = Self::create_local_callback(Box::new(|_click: &ClickEvent| {
+        });
+        let decrement_callback = ctx.create_callback(|_click: &ClickEvent| {
             IncDecMsg::Decrement
-        }));
+        });
         let increment = Button {
             title: "increment".into(),
-            on_click: increment_callback.get_input_ref(),
+            on_click: increment_callback.into(),
         };
         let decrement = Button {
             title: "decrement".into(),
-            on_click: decrement_callback.get_input_ref(),
+            on_click: decrement_callback.into(),
         };
 
         let mut children = Vec::new();
-        children.push(increment.render().into());
-        children.push(decrement.render().into());
+        children.push(increment.render(NativeContext::new()).into());
+        children.push(decrement.render(NativeContext::new()).into());
         let div = Div {
             children,
         };
-        LocalNode::new(self).with_child(div.render()).with_callback(increment_callback).with_callback(decrement_callback)
-
-        //<div>
-        //  <button on_click={|_click: &ClickEvent| IncDecMsg:::Increment}>increment</button>
-        //  <button on_click={|_click: &ClickEvent| IncDecMsg:::Decrement}>{format!("{}","decrement")}</button>
-        //</div>
-        //
-        //
-        //
-        //
-        //
-        //
-        //
+        let div2 = Div { children: vec![] };
+        LocalNode::new(self, ctx).with_child(div.render(NativeContext::new()))
     }
 
 
-    fn update(&self, msg: &Self::Msg) -> UpdateResult<Self> {
+    fn update(&self, msg: &Self::Msg, ctx: LocalContext<Self::Msg>) -> UpdateResult<Self> {
         UpdateResult::NewState(Box::new(match msg {
             IncDecMsg::Increment => Self {
                 on_change: self.on_change,

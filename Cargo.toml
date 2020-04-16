@@ -1,0 +1,13 @@
+[workspace]
+members = [
+	"common-markup",
+	"component-registry-builder",
+	"derive-component-builder",
+	"dev-server-lib",
+	"html-markup",
+	"ragnar-lib",
+	"rsx-macro",
+]
+exclude = [
+    "examples/todomvc/app"
+]

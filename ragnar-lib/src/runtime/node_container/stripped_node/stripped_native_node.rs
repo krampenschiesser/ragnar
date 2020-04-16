@@ -4,14 +4,13 @@ use std::collections::HashMap;
 use crate::attribute::Attribute;
 use crate::callback::{CallbackId, NativeCallbackWrapper};
 use crate::node::{Node, NodeId};
-use crate::node::native_node::{NativeNode, NodeChildren};
+use crate::node::native_node::{NativeNode};
 use crate::runtime::node_container::stripped_node::StrippedNode;
 
 pub struct StrippedNativeNode {
     pub id: NodeId,
     pub parent: Option<NodeId>,
     pub native_name: Cow<'static, str>,
-    pub text_child: Option<Cow<'static, str>>,
     pub callbacks: Vec<CallbackId>,
     pub children: Vec<NodeId>,
     pub attributes: HashMap<Cow<'static, str>, Attribute>,
@@ -26,15 +25,7 @@ impl NativeNode {
             callbacks,
             attributes,
         } = self;
-        let (text, child_ids, children) = match children {
-            NodeChildren::Nodes(nodes) => {
-                (None, nodes.iter().map(|n| n.get_id()).collect(), nodes)
-            }
-            NodeChildren::Text(t) => {
-                (Some(t), Vec::with_capacity(0), Vec::with_capacity(0))
-            }
-            _ => (None, Vec::with_capacity(0), Vec::with_capacity(0))
-        };
+        let (child_ids, children) = (children.iter().map(|n| n.get_id()).collect(), children);
 
         let node = StrippedNativeNode {
             callbacks: callbacks.iter().map(|c| c.id).collect(),
@@ -43,7 +34,6 @@ impl NativeNode {
             attributes,
             native_name,
             parent,
-            text_child: text,
         };
         (node, callbacks, children)
     }

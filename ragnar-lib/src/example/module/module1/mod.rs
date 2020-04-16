@@ -1,4 +1,4 @@
-use crate::app_component::{AppComponent, AppEvent, AppState};
+use crate::app_component::{AppComponent, AppEvent, AppState, AppContext};
 use crate::callback::TypedInputCallbackRef;
 use crate::example::module::module1::nested_module::{MyNestedModuleComponent, NestedModuleLocalMsg, NestedModuleLocalState};
 
@@ -30,12 +30,12 @@ impl AppComponent for MyModuleComponent {
     type Msg = ModuleLocalMsg;
     type State = ModuleLocalState;
 
-    fn render(&self, state: &Self::State) -> AppNode<Self::Msg> {
+    fn render(&self, state: &Self::State, ctx: AppContext<Self::Msg>) -> AppNode<Self::Msg> {
         let nested = MyNestedModuleComponent { callback: self.callback.clone() };
         let f = |e: NestedModuleLocalMsg| {
             ModuleLocalMsg::Nested(e)
         };
-        let node = nested.render(&state.nested);
-        AppNode::empty().with_child_and_converter(node, f)
+        let node = nested.render(&state.nested,AppContext::new());
+        AppNode::empty(ctx).with_child_and_converter(node, f)
     }
 }

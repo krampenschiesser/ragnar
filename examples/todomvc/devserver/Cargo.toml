@@ -1,0 +1,11 @@
+[package]
+name = "devserver"
+version = "0.1.0"
+authors = ["krampenschiesser <krampenschiesser@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+ragnar-dev-server-lib = {path = "../../../dev-server-lib"}
+app = {path = "../app"}

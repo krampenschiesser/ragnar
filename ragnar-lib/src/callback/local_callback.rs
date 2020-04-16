@@ -1,4 +1,4 @@
-use crate::callback::{CallbackId, TypedInputCallbackRef};
+use crate::callback::{CallbackId, TypedInputCallbackRef, TypedCallbackRef};
 use crate::local_component::LocalEvent;
 use crate::INCREMENTER;
 use std::marker::PhantomData;
@@ -25,6 +25,13 @@ impl<In, Out: LocalEvent> LocalCallback<In, Out> {
             id: CallbackId(INCREMENTER.get_next()),
             callback,
             chained: Vec::with_capacity(0),
+        }
+    }
+    pub fn get_ref(&self) -> TypedCallbackRef<In,Out> {
+        TypedCallbackRef {
+            id: self.id,
+            _in: PhantomData,
+            _out: PhantomData,
         }
     }
     pub fn get_input_ref(&self) -> TypedInputCallbackRef<In> {

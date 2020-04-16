@@ -1,0 +1,12 @@
+Dependencies = { ((Dependency | (!Dependency ~ ANY)+) ~ NEWLINE?)+ }
+Dependency = {
+	CrateName ~ Whitespace* ~ "=" ~ Whitespace* ~ Version
+}
+CrateName = { (ASCII_ALPHANUMERIC | "_" | "-" )+ }
+Version = {
+  ("~" | "^" )? ~
+  (ASCII_DIGIT+|"*") ~
+  ("."~(ASCII_DIGIT+|"*") )? ~
+  ("."~(ASCII_DIGIT+|"*") )?
+}
+Whitespace = _{" " | "\t"}

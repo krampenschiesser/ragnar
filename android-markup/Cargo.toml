@@ -1,5 +1,5 @@
 [package]
-name = "android-markup"
+name = "ragnar-android-markup"
 version = "0.1.0"
 authors = ["krampenschiesser <krampenschiesser@gmail.com>"]
 edition = "2018"

@@ -1,8 +1,18 @@
 use std::ops::Deref;
 
+use crate::{AppState, NativeComponent, LocalComponent, AppComponent, AppEvent};
+pub use crate::node::app_node::AppNode;
 use crate::node::app_node::UntypedAppNode;
-use crate::node::local_node::LocalNode;
-use crate::node::native_node::NativeNode;
+pub use crate::node::local_node::LocalNode;
+pub use crate::node::native_node::NativeNode;
+pub use crate::node::text_node::TextNode;
+
+
+pub mod app_node;
+pub mod native_node;
+pub mod local_node;
+pub mod text_node;
+pub mod extend_node_children;
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Copy, Clone, Hash)]
 pub struct NodeId(pub u64);
@@ -15,14 +25,12 @@ impl Deref for NodeId {
     }
 }
 
-pub mod app_node;
-pub mod native_node;
-pub mod local_node;
 
 pub enum Node {
     Native(NativeNode),
     Local(LocalNode),
     App(UntypedAppNode),
+    Text(TextNode),
 }
 
 impl Node {
@@ -31,6 +39,7 @@ impl Node {
             Node::Native(n) => n.id,
             Node::Local(n) => n.id,
             Node::App(n) => n.id,
+            Node::Text(n) => n.id,
         }
     }
 }

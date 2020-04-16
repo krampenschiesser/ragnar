@@ -1,25 +1,26 @@
-use crate::callback::{CallbackId, TypedInputCallbackRef};
+use crate::callback::{CallbackId, TypedInputCallbackRef, TypedCallbackRef};
 use crate::app_component::AppEvent;
 use crate::INCREMENTER;
 use std::marker::PhantomData;
 use std::any::Any;
 use crate::node::NodeId;
+use std::cell::Cell;
 
 pub struct AppCallback<In: 'static, Out: AppEvent + 'static> {
     pub id: CallbackId,
-    pub callback: Box<dyn Fn(&In) -> Out>,
+    pub callback: Box<dyn FnOnce(&In) -> Out>,
     pub chained: Vec<CallbackId>,
 }
 
 pub struct AppCallbackWrapper {
     pub id: CallbackId,
     pub node_id: NodeId,
-    pub callback: Box<dyn Fn(&Box<dyn Any>) -> Option<Box<dyn Any>>>,
+    pub callback: Cell<Option<Box<dyn FnOnce(&Box<dyn Any>) -> Option<Box<dyn Any>>>>>,
     pub chained: Vec<CallbackId>,
 }
 
 impl<In, Out: AppEvent> AppCallback<In, Out> {
-    pub fn new(callback: Box<dyn Fn(&In) -> Out>) -> Self {
+    pub fn new(callback: Box<dyn FnOnce(&In) -> Out>) -> Self {
         Self {
             id: CallbackId(INCREMENTER.get_next()),
             callback,
@@ -30,6 +31,13 @@ impl<In, Out: AppEvent> AppCallback<In, Out> {
         TypedInputCallbackRef {
             id: self.id,
             _phantom: PhantomData,
+        }
+    }
+    pub fn get_ref(&self) -> TypedCallbackRef<In,Out> {
+        TypedCallbackRef {
+            id: self.id,
+            _out: PhantomData,
+            _in: PhantomData,
         }
     }
     pub fn chain(&mut self, other: TypedInputCallbackRef<Out>) {
@@ -55,7 +63,7 @@ impl<In: 'static, Out: AppEvent + 'static> Into<AppCallbackWrapper> for AppCallb
             id,
             node_id: NodeId(0),
             // callback_type,
-            callback: Box::new(x),
+            callback: Cell::new(Some(Box::new(x))),
             chained,
         }
     }

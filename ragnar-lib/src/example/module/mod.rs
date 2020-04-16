@@ -1,6 +1,6 @@
 
 
-use crate::app_component::{AppComponent, AppEvent, AppState};
+use crate::app_component::{AppComponent, AppEvent, AppState, AppContext};
 use crate::callback::TypedInputCallbackRef;
 use crate::example::module::module1::{ModuleLocalMsg, ModuleLocalState, MyModuleComponent};
 
@@ -30,11 +30,11 @@ impl AppComponent for MyAppComponent {
     type Msg = GlobalMsg;
     type State = GlobalState;
 
-    fn render(&self, state: &Self::State) -> AppNode<Self::Msg> {
-        let callback = Self::create_app_callback(Box::new(|_s: &String| GlobalMsg::Other));
-        let child = MyModuleComponent { callback: callback.get_input_ref() };
-        let node = child.render(&state.module_state);
+    fn render(&self, state: &Self::State, mut ctx: AppContext<Self::Msg>) -> AppNode<Self::Msg> {
+        let callback = ctx.create_callback(|_s: &String| GlobalMsg::Other);
+        let child = MyModuleComponent { callback: callback.into() };
+        let node = child.render(&state.module_state,AppContext::new());
 
-        AppNode::empty().with_child_and_converter(node, |e: ModuleLocalMsg| GlobalMsg::Local(e))
+        AppNode::empty(ctx).with_child_and_converter(node, |e: ModuleLocalMsg| GlobalMsg::Local(e))
     }
 }

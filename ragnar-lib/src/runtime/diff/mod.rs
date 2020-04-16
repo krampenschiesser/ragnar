@@ -1,9 +1,7 @@
-
-
 use crate::callback::CallbackId;
 use crate::node::NodeId;
 use crate::runtime::diff::operations::{AddNode, DiffOperation, ParentPosition, RemoveAttribute, RemoveListener, RemoveNode, SetAttribute, SetListener, SwapNode, SwapNodeId};
-use crate::runtime::node_container::{NativeView};
+use crate::runtime::node_container::NativeView;
 
 
 pub mod operations;
@@ -15,6 +13,7 @@ pub struct CompleteDiff<'a> {
 }
 
 pub enum DiffError {
+    HandlerAlreadyUsed(CallbackId,NodeId),
     NonNative(NodeId),
     OldNodeNotFound(NodeId),
     NewNodeNotFound(NodeId),
@@ -32,34 +31,34 @@ impl<'a> CompleteDiff<'a> {
 
     pub fn diff(&self) -> Vec<DiffOperation> {
         let mut diff_ops = Vec::new();
-        self.diff_children(self.original.as_slice(),self.new.as_slice(), None, &mut diff_ops);
+        self.diff_children(self.original.as_slice(), self.new.as_slice(), None, &mut diff_ops);
         diff_ops
     }
 
     fn diff_nodes(&self, original: &'a NativeView, new: &'a NativeView, diff_ops: &mut Vec<DiffOperation>, parent: Option<ParentPosition>) {
-        if original.node.id == new.node.id {
-            self.diff_children(original.children.as_slice(), new.children.as_slice(), parent, diff_ops);
-        } else if original.node.native_name != new.node.native_name {
-            diff_ops.push(DiffOperation::SwapNode(SwapNode::new(original.node.id, new, parent)));
-            self.diff_children(&original.children, &new.children, parent, diff_ops);
+        if original.get_id() == new.get_id() {
+            self.diff_children(original.get_children(), new.get_children(), parent, diff_ops);
+        } else if original.get_native_name() != new.get_native_name() {
+            diff_ops.push(DiffOperation::SwapNode(SwapNode::new(*original.get_id(), new, parent)));
+            self.diff_children(&original.get_children(), &new.get_children(), parent, diff_ops);
         } else {
-            diff_ops.push(DiffOperation::SwapNodeId(SwapNodeId { original: original.node.id, new: new.node.id }));
+            diff_ops.push(DiffOperation::SwapNodeId(SwapNodeId { original: *original.get_id(), new: *new.get_id() }));
             self.diff_attributes(original, new, diff_ops);
             self.diff_callbacks(original, new, diff_ops);
-            self.diff_children(&original.children, &new.children, parent, diff_ops);
+            self.diff_children(&original.get_children(), &new.get_children(), parent, diff_ops);
         }
     }
 
     fn diff_attributes(&self, original: &'a NativeView, new: &'a NativeView, diff_ops: &mut Vec<DiffOperation>) {
-        let all_keys = original.node.attributes.keys().chain(new.node.attributes.keys());
+        let all_keys = original.get_attributes().keys().chain(new.get_attributes().keys());
         for key in all_keys {
-            let original_value = original.node.attributes.get(key);
-            let new_value = new.node.attributes.get(key);
+            let original_value = original.get_attributes().get(key);
+            let new_value = new.get_attributes().get(key);
             if original_value != new_value {
                 if let Some(new_value) = new_value {
-                    diff_ops.push(DiffOperation::SetAttribute(SetAttribute { node_id: new.node.id, attribute_name: key.clone(), attribute_value: new_value.clone() }));
+                    diff_ops.push(DiffOperation::SetAttribute(SetAttribute { node_id: *new.get_id(), attribute_name: key.clone(), attribute_value: new_value.clone() }));
                 } else {
-                    diff_ops.push(DiffOperation::RemoveAttribute(RemoveAttribute { node_id: new.node.id, attribute_name: key.clone() }));
+                    diff_ops.push(DiffOperation::RemoveAttribute(RemoveAttribute { node_id: *new.get_id(), attribute_name: key.clone() }));
                 }
             }
         }
@@ -79,7 +78,7 @@ impl<'a> CompleteDiff<'a> {
                 if let Some(new_child) = new_child {
                     self.diff_nodes(original_child, new_child, diff_ops, parent);
                 } else {
-                    diff_ops.push(DiffOperation::RemoveNode(RemoveNode { node_id: original_child.node.id }))
+                    diff_ops.push(DiffOperation::RemoveNode(RemoveNode { node_id: *original_child.get_id() }))
                 }
             } else if let Some(new_child) = new_child {
                 diff_ops.push(DiffOperation::AddNode(AddNode::new(new_child, parent)));
@@ -87,8 +86,8 @@ impl<'a> CompleteDiff<'a> {
         }
     }
     fn diff_callbacks(&self, original: &'a NativeView, new: &'a NativeView, diff_ops: &mut Vec<DiffOperation>) {
-        let original_callbacks = &original.callbacks;
-        let new_callbacks = &new.callbacks;
+        let original_callbacks = &original.get_callbacks();
+        let new_callbacks = &new.get_callbacks();
         let new_callback_names: Vec<_> = new_callbacks.iter().map(|c| &c.native_name).collect();
 
 
