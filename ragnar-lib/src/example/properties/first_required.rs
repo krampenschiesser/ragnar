@@ -51,7 +51,7 @@ fn construct_it_with_option() {
 }
 
 fn construct_without_required() {
-    let missing_a = AppFirstRequiredComponentBuilder::default();
+    let _missing_a = AppFirstRequiredComponentBuilder::default();
     // let missing_a = missing_a.b(String::new());
     // missing_a.into_component();
 }

@@ -1,14 +1,8 @@
-use std::borrow::Cow;
-use std::include;
+use ragnar_lib::{NativeComponent, NativeContext, NativeNode};
 
-
-use ragnar_lib::{NativeCallback, NativeComponent, NativeEvent,NativeContext, NativeNode, TypedInputCallbackRef, Node};
-
-use crate::event::MouseEvent;
-use crate::form::FormId;
-use crate::global::{ReferenceId, GlobalAttributes, GlobalCallbacks, NativeApply};
+use crate::global::{GlobalAttributes, GlobalCallbacks, NativeApply};
 use crate::input::{DataListId, CommonInputAttributes};
-use chrono::{NaiveDate, Date, Utc, Datelike, NaiveTime, Timelike};
+use chrono::{NaiveTime, Timelike};
 
 #[derive(Component, Default)]
 pub struct InputTime {
@@ -28,7 +22,7 @@ pub struct InputTime {
 
 impl NativeComponent for InputTime {
     fn render(self, ctx: NativeContext) -> NativeNode {
-        let node = NativeNode::new("input",ctx)
+        let node = NativeNode::new("input", ctx)
             .set("type", "time")
             .set_if("list", self.list)
             .set_if("readonly", self.readonly)

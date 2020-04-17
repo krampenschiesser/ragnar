@@ -1,12 +1,6 @@
 use std::borrow::Cow;
-use std::include;
-
-
-use ragnar_lib::{NativeCallback, NativeComponent, NativeEvent,NativeContext, NativeNode, TypedInputCallbackRef, Node};
-
-use crate::event::MouseEvent;
-use crate::form::FormId;
-use crate::global::{ReferenceId, GlobalAttributes, GlobalCallbacks, NativeApply};
+use ragnar_lib::{NativeComponent, NativeContext, NativeNode};
+use crate::global::{GlobalAttributes, GlobalCallbacks, NativeApply};
 use crate::input::CommonInputAttributes;
 
 #[derive(Component, Default)]
@@ -22,7 +16,7 @@ pub struct InputReset {
 
 impl NativeComponent for InputReset {
     fn render(self, ctx: NativeContext) -> NativeNode {
-        let node = NativeNode::new("input",ctx)
+        let node = NativeNode::new("input", ctx)
             .set("type", "reset")
             .set_if("value", self.value);
 

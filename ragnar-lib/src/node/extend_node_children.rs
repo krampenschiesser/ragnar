@@ -1,5 +1,5 @@
-use crate::{NativeNode, Node, TextNode};
-use std::iter::Map;
+use crate::{Node, TextNode};
+
 
 pub trait ExtendNodeChildren {
     fn extend_children(self, children: &mut Vec<Node>);

@@ -1,7 +1,7 @@
 
 
 use crate::app_component::{AppComponent, AppEvent, AppState, AppContext};
-use crate::callback::TypedInputCallbackRef;
+
 use crate::example::module::module1::{ModuleLocalMsg, ModuleLocalState, MyModuleComponent};
 
 use crate::node::app_node::AppNode;

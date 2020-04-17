@@ -97,7 +97,7 @@ impl ElementParser {
             let res = expect_punct(begin_span, '/', &token, "");
             if res.is_ok() {
                 let token = iter.next();
-                let (span, ident) = expect_identifier(span, Some(parent_name), &token, "expected closing tag with parent element name")?;
+                let (span, _ident) = expect_identifier(span, Some(parent_name), &token, "expected closing tag with parent element name")?;
                 let token = iter.next();
                 expect_punct(span, '>', &token, "Expected closing tag '>'")?;
                 return Ok(None);

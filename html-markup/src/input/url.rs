@@ -1,12 +1,6 @@
 use std::borrow::Cow;
-use std::include;
-
-
-use ragnar_lib::{NativeCallback, NativeComponent, NativeEvent,NativeContext, NativeNode, TypedInputCallbackRef, Node};
-
-use crate::event::MouseEvent;
-use crate::form::FormId;
-use crate::global::{ReferenceId, GlobalAttributes, GlobalCallbacks, NativeApply};
+use ragnar_lib::{NativeComponent, NativeContext, NativeNode};
+use crate::global::{GlobalAttributes, GlobalCallbacks, NativeApply};
 use crate::input::{DataListId, CommonInputAttributes};
 
 #[derive(Component, Default)]
@@ -31,18 +25,18 @@ pub struct InputUrl {
 
 impl NativeComponent for InputUrl {
     fn render(self, ctx: NativeContext) -> NativeNode {
-        let node = NativeNode::new("input",ctx)
-            .set("type","url")
-            .set_if("list",self.list)
-            .set_if("maxlength",self.maxlength)
-            .set_if("minlength",self.minlength)
-            .set_if("pattern",self.pattern)
-            .set_if("placeholder",self.placeholder)
-            .set_if("readonly",self.readonly)
-            .set_if("required",self.required)
-            .set_if("required",self.spellcheck)
-            .set_if("size",self.size)
-            .set_if("value",self.value)
+        let node = NativeNode::new("input", ctx)
+            .set("type", "url")
+            .set_if("list", self.list)
+            .set_if("maxlength", self.maxlength)
+            .set_if("minlength", self.minlength)
+            .set_if("pattern", self.pattern)
+            .set_if("placeholder", self.placeholder)
+            .set_if("readonly", self.readonly)
+            .set_if("required", self.required)
+            .set_if("required", self.spellcheck)
+            .set_if("size", self.size)
+            .set_if("value", self.value)
             ;
 
         let node = self.common_input_attributes.apply(node);

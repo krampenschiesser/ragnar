@@ -7,7 +7,7 @@ mod error;
 mod instantiate;
 
 use proc_macro2::{TokenStream, Span};
-use std::sync::atomic::Ordering;
+
 use ragnar_component_registry_builder::{ComponentCache, ComponentFeatureView, RenderType};
 use crate::parser::{ElementParser, Element, ElementOrText};
 use syn::spanned::Spanned;
@@ -123,8 +123,8 @@ fn check_elements(elements: &[ElementOrText], cache: &ComponentCache, parent: Op
                     success = false;
                 }
             }
-            ElementOrText::Text((span, text)) => {
-                if let Some(parent) = parent {} else {
+            ElementOrText::Text((span, _text)) => {
+                if let Some(_parent) = parent {} else {
                     span.unwrap().error("No parent element for text").emit();
                     success = false;
                 }

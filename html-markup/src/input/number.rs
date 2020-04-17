@@ -1,12 +1,5 @@
-use std::borrow::Cow;
-use std::include;
-
-
-use ragnar_lib::{NativeCallback, NativeComponent, NativeEvent,NativeContext, NativeNode, TypedInputCallbackRef, Node};
-
-use crate::event::MouseEvent;
-use crate::form::FormId;
-use crate::global::{ReferenceId, GlobalAttributes, GlobalCallbacks, NativeApply};
+use ragnar_lib::{NativeComponent, NativeContext, NativeNode};
+use crate::global::{GlobalAttributes, GlobalCallbacks, NativeApply};
 use crate::input::{DataListId, CommonInputAttributes};
 
 #[derive(Component, Default)]
@@ -26,13 +19,13 @@ pub struct InputNumber {
 
 impl NativeComponent for InputNumber {
     fn render(self, ctx: NativeContext) -> NativeNode {
-        let node = NativeNode::new("input",ctx)
-            .set("type","number")
-            .set_if("list",self.list)
-            .set_if("placeholder",self.placeholder)
-            .set_if("value",self.value)
-            .set_if("readonly",self.readonly)
-            .set_if("step",self.step)
+        let node = NativeNode::new("input", ctx)
+            .set("type", "number")
+            .set_if("list", self.list)
+            .set_if("placeholder", self.placeholder)
+            .set_if("value", self.value)
+            .set_if("readonly", self.readonly)
+            .set_if("step", self.step)
             ;
 
         let node = self.common_input_attributes.apply(node);

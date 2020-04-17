@@ -42,12 +42,12 @@ impl LocalComponent for IncDecWidget {
         let div = Div {
             children,
         };
-        let div2 = Div { children: vec![] };
+        let _div2 = Div { children: vec![] };
         LocalNode::new(self, ctx).with_child(div.render(NativeContext::new()))
     }
 
 
-    fn update(&self, msg: &Self::Msg, ctx: LocalContext<Self::Msg>) -> UpdateResult<Self> {
+    fn update(&self, msg: &Self::Msg, _ctx: LocalContext<Self::Msg>) -> UpdateResult<Self> {
         UpdateResult::NewState(Box::new(match msg {
             IncDecMsg::Increment => Self {
                 on_change: self.on_change,

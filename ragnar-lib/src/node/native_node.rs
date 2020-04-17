@@ -42,8 +42,8 @@ impl NativeNode {
         self
     }
 
-    pub fn with_callback_if<T: NativeEvent, S: Into<Cow<'static, str>>>(mut self, name: S, forward: Option<TypedInputCallbackRef<T>>) -> NativeNode {
-        if let Some(forward) = forward {
+    pub fn with_callback_if<T: NativeEvent, S: Into<Cow<'static, str>>>(self, name: S, forward: Option<TypedInputCallbackRef<T>>) -> NativeNode {
+        if let Some(_forward) = forward {
             let callback = NativeCallback::new(name, Box::new(|e: T| e));
             self.with_callback(callback)
         } else {
@@ -60,7 +60,7 @@ impl NativeNode {
         self.children.push(Node::Text(TextNode::new(t)));
         self
     }
-    pub fn with_text_if<T: Into<Cow<'static, str>>>(mut self, t: Option<T>) -> Self {
+    pub fn with_text_if<T: Into<Cow<'static, str>>>(self, t: Option<T>) -> Self {
         if let Some(t) = t {
             self.with_text(t)
         } else {

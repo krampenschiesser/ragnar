@@ -1,6 +1,4 @@
-use crate::app_component::{AppComponent, AppEvent, AppState};
-use crate::local_component::LocalComponent;
-use crate::node::app_node::AppNode;
+use crate::app_component::{AppEvent, AppState};
 
 mod first_optional;
 mod multiple_optional;

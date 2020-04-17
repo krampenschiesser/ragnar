@@ -50,6 +50,6 @@ fn construct_it_with_option() {
 
 fn construct_without_required() {
     let missing_b = AppFirstOptionalComponentBuilder::default();
-    let missing_b = missing_b.a(String::new());
+    let _missing_b = missing_b.a(String::new());
     // missing_b.into_component();
 }

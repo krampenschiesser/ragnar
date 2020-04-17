@@ -2,13 +2,13 @@
 
 use proc_macro2::{Ident, TokenStream};
 use syn;
-use syn::{Data, Field, Fields, FieldsNamed, GenericParam};
+use syn::{Data, Field, Fields, FieldsNamed};
 use syn::spanned::Spanned;
 
 use quote::{format_ident, quote};
 
 #[proc_macro_derive(Component, attributes(required, default,delegated,rename))]
-pub fn component_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+pub fn component_derive(_input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     proc_macro::TokenStream::new()
 }
 

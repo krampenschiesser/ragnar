@@ -256,27 +256,27 @@ impl<'a> NativeView<'a> {
 
     pub fn get_native_name(&self) -> &str {
         match self {
-            NativeView::Text(t) => "",
+            NativeView::Text(_t) => "",
             NativeView::Node(n) => &n.node.native_name,
         }
     }
 
     pub fn get_children(&self) -> &[NativeView<'a>] {
         match self {
-            NativeView::Text(t) => &[],
+            NativeView::Text(_t) => &[],
             NativeView::Node(n) => &n.children,
         }
     }
 
     pub fn get_attributes(&self) -> &HashMap<Cow<'static, str>, Attribute> {
         match self {
-            NativeView::Text(t) => &EMPTY_ATTRIBUTES,
+            NativeView::Text(_t) => &EMPTY_ATTRIBUTES,
             NativeView::Node(n) => &n.node.attributes,
         }
     }
     pub fn get_callbacks(&self) -> &[&'a NativeCallbackWrapper] {
         match self {
-            NativeView::Text(t) => &[],
+            NativeView::Text(_t) => &[],
             NativeView::Node(n) => &n.callbacks,
         }
     }

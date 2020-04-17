@@ -1,5 +1,5 @@
 use failure::Fail;
-use semver::{SemVerError, ReqParseError};
+
 
 #[derive(Debug, Fail)]
 pub enum ParseError {

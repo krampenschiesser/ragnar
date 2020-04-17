@@ -81,7 +81,7 @@ impl Instantiate {
         }
 
         let (child_token, child_instantiation) = if child_names.is_empty() {
-            if let Some(component_att) = component.required_attributes.iter().chain(component.optional_attributes.iter()).find(|a| a.name_code == "children") {
+            if let Some(_component_att) = component.required_attributes.iter().chain(component.optional_attributes.iter()).find(|a| a.name_code == "children") {
                 (
                     quote_spanned! {span=>
                         children: vec![],

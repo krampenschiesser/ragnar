@@ -43,7 +43,7 @@ fn scan_toml_file(path: &Path, source_path: String) -> Result<ScannedCrate, Pars
 
     let version = match Version::parse(toml.package.version.as_str()) {
         Ok(v) => Some(v),
-        Err(e) => {
+        Err(_e) => {
             error!("Could not parse semver version from '{}' in file '{}'", toml.package.version, path.to_string_lossy());
             None
         }

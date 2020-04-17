@@ -1,11 +1,11 @@
 use std::borrow::Cow;
 
-use crate::callback::{NativeCallback, NativeCallbackWrapper, TypedCallbackRef, LocalCallbackWrapper};
+use crate::callback::{NativeCallback, NativeCallbackWrapper, TypedCallbackRef};
 
 
 use crate::node::native_node::NativeNode;
 use downcast_rs::{Downcast, impl_downcast};
-use std::marker::PhantomData;
+
 use crate::TypedInputCallbackRef;
 
 pub trait NativeEvent: Downcast {}
