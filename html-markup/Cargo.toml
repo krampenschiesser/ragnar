@@ -9,3 +9,4 @@ edition = "2018"
 [dependencies]
 ragnar-lib = {path = "../ragnar-lib"}
 chrono = "0.4.11"
+serde = { version = "1.0", features = ["derive"] }

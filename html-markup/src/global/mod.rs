@@ -3,9 +3,12 @@ use std::ops::Deref;
 use ragnar_lib::{Attribute, TypedInputCallbackRef, NativeNode};
 
 use crate::css::{CssClass, CssStyle};
-use crate::event::MouseEvent;
+use crate::event::{MouseEvent, InputEvent};
 use std::borrow::Cow;
 use std::collections::HashMap;
+use crate::event::keyboard::KeyboardEvent;
+
+pub mod file;
 
 #[derive(Debug)]
 pub struct ReferenceId(String);
@@ -49,6 +52,14 @@ pub struct GlobalAttributes {
 
 #[derive(Debug, Default, Component)]
 pub struct GlobalCallbacks {
+    #[rename("onkeydown")]
+    pub on_key_down: Option<TypedInputCallbackRef<KeyboardEvent>>,
+    #[rename("onkeypress")]
+    pub on_key_press: Option<TypedInputCallbackRef<KeyboardEvent>>,
+    #[rename("onkeyup")]
+    pub on_key_up: Option<TypedInputCallbackRef<KeyboardEvent>>,
+    #[rename("oninput")]
+    pub on_input: Option<TypedInputCallbackRef<InputEvent>>,
     #[rename("onclick")]
     pub on_click: Option<TypedInputCallbackRef<MouseEvent>>,
     #[rename("onmousedown")]
@@ -124,6 +135,10 @@ impl NativeApply for GlobalAttributes {
 impl NativeApply for GlobalCallbacks {
     fn apply(self, node: NativeNode) -> NativeNode {
         let GlobalCallbacks {
+            on_key_down,
+            on_key_press,
+            on_key_up,
+            on_input,
             on_click,
             on_mouse_down,
             on_mouse_enter,
@@ -133,13 +148,17 @@ impl NativeApply for GlobalCallbacks {
             on_mouse_over,
             on_mouse_up,
         } = self;
-        node.with_callback_if("onClick", on_click)
-            .with_callback_if("onMouseDown", on_mouse_down)
-            .with_callback_if("onMouseEnter", on_mouse_enter)
-            .with_callback_if("onMouseLeave", on_mouse_leave)
-            .with_callback_if("onMouseMove", on_mouse_move)
-            .with_callback_if("onMouseOut", on_mouse_out)
-            .with_callback_if("onMouseOver", on_mouse_over)
-            .with_callback_if("onMouseUp", on_mouse_up)
+        node.with_callback_if("onclick", on_click)
+            .with_callback_if("onkeydown", on_key_down)
+            .with_callback_if("onkeypress", on_key_press)
+            .with_callback_if("onkeyup", on_key_up)
+            .with_callback_if("oninput", on_input)
+            .with_callback_if("onmousedown", on_mouse_down)
+            .with_callback_if("onmouseenter", on_mouse_enter)
+            .with_callback_if("onmouseleave", on_mouse_leave)
+            .with_callback_if("onmousemove", on_mouse_move)
+            .with_callback_if("onmouseout", on_mouse_out)
+            .with_callback_if("onmouseover", on_mouse_over)
+            .with_callback_if("onmouseup", on_mouse_up)
     }
 }
