@@ -64,6 +64,12 @@ impl<I: std::iter::Iterator, F:  FnMut(<I as Iterator>::Item) -> Node> ExtendNod
         children.extend(vec);
     }
 }
+impl<I: std::iter::Iterator, F:  FnMut(<I as Iterator>::Item) -> Option<Node>> ExtendNodeChildren for std::iter::FilterMap<I,F> {
+    fn extend_children(self, children: &mut Vec<Node>) {
+        let vec: Vec<_> = self.collect();
+        children.extend(vec);
+    }
+}
 
 macro_rules! impl_format {
     ($i:ty) => {
