@@ -24,7 +24,6 @@ pub static OPERATING_SYSTEM: OperatingSystem = OperatingSystem::Mac;
 
 pub async fn start<State: AppState>(initial_state: State) -> Result<(), Error> {
     println!("{:?}", OPERATING_SYSTEM);
-
     // HttpServer::new(|| {
     //     App::new()
     //         .route("/", web::get().to(index))
