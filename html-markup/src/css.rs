@@ -41,3 +41,13 @@ impl From<&str> for CssStyle {
         CssStyle(style.into())
     }
 }
+impl From<String> for CssClass {
+    fn from(style: String) -> Self {
+        CssClass(style.into())
+    }
+}
+impl From<String> for CssStyle {
+    fn from(style: String) -> Self {
+        CssStyle(style.into())
+    }
+}

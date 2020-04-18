@@ -3,7 +3,7 @@ use std::ops::Deref;
 use ragnar_lib::{Attribute, TypedInputCallbackRef, NativeNode};
 
 use crate::css::{CssClass, CssStyle};
-use crate::event::{MouseEvent, InputEvent};
+use crate::event::{MouseEvent, InputEvent, FocusEvent};
 use std::borrow::Cow;
 use std::collections::HashMap;
 use crate::event::keyboard::KeyboardEvent;
@@ -58,10 +58,16 @@ pub struct GlobalCallbacks {
     pub on_key_press: Option<TypedInputCallbackRef<KeyboardEvent>>,
     #[rename("onkeyup")]
     pub on_key_up: Option<TypedInputCallbackRef<KeyboardEvent>>,
+    #[rename("onblur")]
+    pub on_blur: Option<TypedInputCallbackRef<FocusEvent>>,
+    #[rename("onfocus")]
+    pub on_focus: Option<TypedInputCallbackRef<FocusEvent>>,
     #[rename("oninput")]
     pub on_input: Option<TypedInputCallbackRef<InputEvent>>,
     #[rename("onclick")]
     pub on_click: Option<TypedInputCallbackRef<MouseEvent>>,
+    #[rename("ondblclick")]
+    pub on_double_click: Option<TypedInputCallbackRef<MouseEvent>>,
     #[rename("onmousedown")]
     pub on_mouse_down: Option<TypedInputCallbackRef<MouseEvent>>,
     #[rename("onmouseenter")]
@@ -138,8 +144,11 @@ impl NativeApply for GlobalCallbacks {
             on_key_down,
             on_key_press,
             on_key_up,
+            on_blur,
+            on_focus,
             on_input,
             on_click,
+            on_double_click,
             on_mouse_down,
             on_mouse_enter,
             on_mouse_leave,
@@ -149,9 +158,12 @@ impl NativeApply for GlobalCallbacks {
             on_mouse_up,
         } = self;
         node.with_callback_if("onclick", on_click)
+            .with_callback_if("ondblclick", on_double_click)
             .with_callback_if("onkeydown", on_key_down)
             .with_callback_if("onkeypress", on_key_press)
             .with_callback_if("onkeyup", on_key_up)
+            .with_callback_if("onblur", on_blur)
+            .with_callback_if("onfocus", on_focus)
             .with_callback_if("oninput", on_input)
             .with_callback_if("onmousedown", on_mouse_down)
             .with_callback_if("onmouseenter", on_mouse_enter)

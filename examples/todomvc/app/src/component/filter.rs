@@ -4,7 +4,8 @@ use ragnar_html_markup::event::MouseEvent;
 
 #[derive(Component)]
 pub struct FilterView {
-    filter: Filter,
+    #[required]
+    pub filter: Filter,
 }
 
 impl AppComponent for FilterView {

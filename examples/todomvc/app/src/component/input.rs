@@ -2,10 +2,13 @@ use ragnar_lib::{AppComponent, AppNode, AppContext};
 use crate::state::{Msg, State};
 use ragnar_html_markup::event::{InputEvent, KeyboardEvent};
 
-pub struct Input;
+#[derive(Component)]
+pub struct TaskInput {
+
+}
 
 
-impl AppComponent for Input {
+impl AppComponent for TaskInput {
     type Msg = Msg;
     type State = State;
 

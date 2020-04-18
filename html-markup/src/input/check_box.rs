@@ -4,7 +4,7 @@ use crate::global::{GlobalAttributes, GlobalCallbacks, NativeApply};
 use crate::input::CommonInputAttributes;
 
 #[derive(Component, Default)]
-pub struct InputButton {
+pub struct InputCheckBox {
     pub value: Option<Cow<'static, str>>,
     pub checked: Option<bool>,
     pub readonly: Option<bool>,
@@ -16,7 +16,7 @@ pub struct InputButton {
     pub global_callbacks: GlobalCallbacks,
 }
 
-impl NativeComponent for InputButton {
+impl NativeComponent for InputCheckBox {
     fn render(self, ctx: NativeContext) -> NativeNode {
         let node = NativeNode::new("input",ctx)
             .set("type","checkbox")

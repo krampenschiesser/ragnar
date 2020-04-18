@@ -29,7 +29,7 @@ impl ComponentCache {
             buf_reader.read_to_string(&mut content).map_err(|e| ParseError::IoError { file: cache_file_fullpath.clone(), source: e })?;
             serde_json::from_str(&content)?
         } else {
-            let main_lib = scan_dir(cwd.join("src").as_path(), "")?;
+            let main_lib = scan_dir(cwd.join("src").as_path(), "crate")?;
             ComponentCache {
                 main_lib,
                 crates: Vec::new(),
@@ -66,6 +66,8 @@ impl ComponentCache {
                 }
             }
         }
+        // let names: Vec<_> = cache.main_lib.iter().map(|c| c.simple_name.clone()).collect();
+        // panic!("{:?}", names);
         Ok(cache)
     }
 

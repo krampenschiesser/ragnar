@@ -112,7 +112,7 @@ impl Instantiate {
         let render_statement = match component.render_type {
             RenderType::App => {
                 quote_spanned! {span=>
-                    let #ident = ragnar_lib::Node::from(ragnar_lib::AppComponent::render(#ident,state, ragnar_lib::AppContext::new()));
+                    let #ident = ragnar_lib::Node::from(ragnar_lib::AppComponent::render(&#ident,state, ragnar_lib::AppContext::new()).into());
                 }
             }
             RenderType::Local => {

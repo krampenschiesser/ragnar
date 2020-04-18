@@ -16,6 +16,7 @@ impl ExtendNodeChildren for String {
         children.push(Node::Text(TextNode::new(self)));
     }
 }
+
 impl ExtendNodeChildren for &'_ str {
     fn extend_children(self, children: &mut Vec<Node>) {
         children.push(Node::Text(TextNode::new(self.to_string())));
@@ -57,6 +58,36 @@ impl ExtendNodeChildren for std::collections::vec_deque::IntoIter<Node> {
         children.extend(self);
     }
 }
+impl<I: std::iter::Iterator, F:  FnMut(<I as Iterator>::Item) -> Node> ExtendNodeChildren for std::iter::Map<I,F> {
+    fn extend_children(self, children: &mut Vec<Node>) {
+        let vec: Vec<_> = self.collect();
+        children.extend(vec);
+    }
+}
+
+macro_rules! impl_format {
+    ($i:ty) => {
+        impl ExtendNodeChildren for $i {
+            fn extend_children(self, children: &mut Vec<Node>) {
+                children.push(Node::Text(TextNode::new(format!("{}", self))));
+            }
+        }
+    }
+}
+impl_format!(usize);
+impl_format!(u8);
+impl_format!(u16);
+impl_format!(u32);
+impl_format!(u64);
+impl_format!(u128);
+impl_format!(isize);
+impl_format!(i8);
+impl_format!(i16);
+impl_format!(i32);
+impl_format!(i64);
+impl_format!(i128);
+impl_format!(f32);
+impl_format!(f64);
 
 #[cfg(test)]
 mod tests {
@@ -74,6 +105,6 @@ mod tests {
 
         ExtendNodeChildren::extend_children(vec![new_node(), new_node()].into_iter(), &mut children);
         ExtendNodeChildren::extend_children(vec![new_node(), new_node()], &mut children);
-        assert_eq!(5,children.len());
+        assert_eq!(5, children.len());
     }
 }

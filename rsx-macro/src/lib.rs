@@ -30,23 +30,38 @@ lazy_static! {
     };
 }
 
-
+enum OutputRenderType {
+    Native,
+    Local,
+    App,
+    Nodes,
+    Node
+}
 #[proc_macro]
 pub fn local(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    parse(input.into(), RenderType::Local).into()
+    parse(input.into(), OutputRenderType::Local).into()
 }
 
 #[proc_macro]
 pub fn native(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    parse(input.into(), RenderType::Native).into()
+    parse(input.into(), OutputRenderType::Native).into()
 }
 
 #[proc_macro]
 pub fn app(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    parse(input.into(), RenderType::App).into()
+    parse(input.into(), OutputRenderType::App).into()
+}
+#[proc_macro]
+pub fn nodes(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    parse(input.into(), OutputRenderType::Nodes).into()
 }
 
-fn parse(input: TokenStream, render_type: RenderType) -> TokenStream {
+#[proc_macro]
+pub fn node(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    parse(input.into(), OutputRenderType::Node).into()
+}
+
+fn parse(input: TokenStream, render_type: OutputRenderType) -> TokenStream {
     let parser = ElementParser {};
     let span = input.span();
     let mut iter = input.into_iter();
@@ -66,7 +81,7 @@ fn parse(input: TokenStream, render_type: RenderType) -> TokenStream {
     }
 }
 
-fn render_elements(elements: Vec<ElementOrText>, cache: &ComponentCache, render_type: RenderType, span: Span) -> TokenStream {
+fn render_elements(elements: Vec<ElementOrText>, cache: &ComponentCache, render_type: OutputRenderType, span: Span) -> TokenStream {
     let mut counter = 0usize;
     let mut instantiated_code = Vec::new();
     let mut instantiated_names = Vec::new();
@@ -83,25 +98,36 @@ fn render_elements(elements: Vec<ElementOrText>, cache: &ComponentCache, render_
     //     #(#vec)*
     // });
     match render_type {
-        RenderType::Native => {
+        OutputRenderType::Native => {
             quote_spanned! {span=>
                 #(# instantiated_code)*
                 vec![#(#instantiated_names),*]
             }
         }
-        RenderType::App => {
+        OutputRenderType::App => {
             quote_spanned! {span=>
                 #(# instantiated_code)*
                 ragnar_lib::AppNode::<Self::Msg>::empty(ctx).with_children(vec![#(#instantiated_names),*])
             }
         }
-        RenderType::Local => {
+        OutputRenderType::Local => {
             quote_spanned! {span=>
                 #(# instantiated_code)*
                 ragnar_lib::LocalNode::new(self,ctx).with_children(vec![#(#instantiated_names),*])
             }
         }
-        _ => unreachable!()
+        OutputRenderType::Nodes => {
+            quote_spanned! {span=>
+                #(# instantiated_code)*
+                vec![#(#instantiated_names),*]
+            }
+        }
+        OutputRenderType::Node => {
+            quote_spanned! {span=>
+                #(# instantiated_code)*
+                #(#instantiated_names)*
+            }
+        }
     }
 }
 

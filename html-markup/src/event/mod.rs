@@ -4,11 +4,13 @@ pub mod mouse;
 pub mod input;
 pub mod datatransfer;
 pub mod keyboard;
+pub mod focus;
 
 pub use mouse::*;
 pub use input::*;
 pub use keyboard::*;
 pub use datatransfer::*;
+pub use focus::*;
 
 use crate::global::file::File;
 

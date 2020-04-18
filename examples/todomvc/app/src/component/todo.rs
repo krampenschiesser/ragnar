@@ -5,6 +5,7 @@ use ragnar_html_markup::div::Div;
 use ragnar_html_markup::label::Label;
 use ragnar_html_markup::button::Button;
 
+#[derive(Component)]
 pub struct TodoComponent {
     todo: Task,
 }
