@@ -1,4 +1,4 @@
 # Desktop
 
-go with gtk...
-however preferably a rust solution for easier packaging (no dependency on gtk)
+Which solution to go for?
+Gtk? Fltk? Rust-native(iced, conrod), JavaFX bundled via Graal, pure web via webview?

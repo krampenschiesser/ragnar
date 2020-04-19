@@ -6,9 +6,9 @@ The state is only mutable by handlers(reducers) for events(actions).
 
 ## Serializability
 
-State and events are serializable into CBOR via Serde.
-With this limitation we can store the state and events before reloading a shared library or WASM module.
-After reloading we will start that library/module back up and feed state and events back in.
+State and events are serializable via Serde.
+With this limitation we can store the state and events before reloading/restarting the dev-server.
+After restart we will feed the state and events back into the dev-server and rerender for all clients.
 
 The need for feeding events back in helps so that while developing the UI and reloading its module we can keep the event history
 and do A<->B comparisons between the different states of the UI.
