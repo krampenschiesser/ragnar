@@ -1,5 +1,6 @@
 use ragnar_lib::{AppState, AppEvent};
 
+#[derive(Debug,Clone,serde::Serialize,serde::Deserialize)]
 pub struct State {
     pub entries: Vec<Task>,
     pub filter: Filter,
@@ -8,7 +9,7 @@ pub struct State {
 }
 
 impl AppState for State {}
-
+#[derive(Debug,Clone,serde::Serialize,serde::Deserialize)]
 pub struct Task {
     pub name: String,
     pub description: String,
@@ -16,7 +17,7 @@ pub struct Task {
     pub editing: bool,
 }
 
-
+#[derive(Debug,Clone,serde::Serialize,serde::Deserialize)]
 pub enum Msg {
     Add,
     Edit(usize),
@@ -33,7 +34,7 @@ pub enum Msg {
 
 impl AppEvent for Msg {}
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq,serde::Serialize,serde::Deserialize)]
 pub enum Filter {
     All,
     Active,
@@ -49,6 +50,7 @@ impl ToString for Filter {
         }
     }
 }
+
 impl Filter {
     pub fn fit(&self, entry: &Task) -> bool {
         match *self {
@@ -60,6 +62,14 @@ impl Filter {
 }
 
 impl State {
+    pub fn new() -> Self {
+        Self {
+            edit_value: String::new(),
+            entries: Vec::new(),
+            filter: Filter::All,
+            value: String::new(),
+        }
+    }
     pub fn total(&self) -> usize {
         self.entries.len()
     }

@@ -16,4 +16,8 @@ pub struct KeyboardEvent {
     pub event: Event,
 }
 
-impl NativeEvent for KeyboardEvent {}
+impl NativeEvent for KeyboardEvent {
+    fn get_type() -> &'static str where Self: Sized {
+        "html.keyboardevent"
+    }
+}

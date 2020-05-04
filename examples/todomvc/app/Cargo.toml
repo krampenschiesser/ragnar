@@ -13,3 +13,4 @@ ragnar-html-markup = {path = "../../../html-markup"}
 ragnar-lib = {path= "../../../ragnar-lib"}
 ragnar-rsx-macro = {path= "../../../rsx-macro"}
 ragnar-derive-component-builder = {path = "../../../derive-component-builder"}
+serde = { version = "1.0", features = ["derive"] }

@@ -13,7 +13,7 @@ use crate::runtime::node_container::NodeContainer;
 use super::node::Node;
 
 mod node_container;
-mod diff;
+pub(crate) mod diff;
 
 pub struct Runtime<C: AppComponent<State=State, Msg=Msg>, State: AppState, Msg: AppEvent> {
     root_component: C,

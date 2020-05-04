@@ -14,7 +14,7 @@ pub mod local_node;
 pub mod text_node;
 pub mod extend_node_children;
 
-#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Copy, Clone, Hash)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Copy, Clone, Hash,serde::Serialize,serde::Deserialize)]
 pub struct NodeId(pub u64);
 
 impl Deref for NodeId {

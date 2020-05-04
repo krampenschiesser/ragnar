@@ -31,3 +31,9 @@ impl Incrementer {
         self.counter.fetch_add(1, Ordering::AcqRel)
     }
 }
+
+pub struct App<C: AppComponent<State=State, Msg=Msg>, State: AppState, Msg: AppEvent> {
+    pub root_component: C,
+    pub update_function: Box<dyn Fn(&mut State, &Msg)->()>,
+    pub initial_state: State,
+}

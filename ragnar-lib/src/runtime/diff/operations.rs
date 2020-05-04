@@ -7,33 +7,38 @@ use crate::node::NodeId;
 
 use crate::runtime::node_container::NativeView;
 
-
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct SetAttribute {
     pub node_id: NodeId,
     pub attribute_name: Cow<'static, str>,
     pub attribute_value: Attribute,
 }
 
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct RemoveAttribute {
     pub node_id: NodeId,
     pub attribute_name: Cow<'static, str>,
 }
 
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct RemoveListener {
     pub node_id: NodeId,
     pub callback_id: CallbackId,
 }
 
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct SetListener {
     pub callback_name: Cow<'static, str>,
     pub id: CallbackId,
     pub node_id: NodeId,
 }
 
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct RemoveNode {
     pub node_id: NodeId
 }
 
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct AddNode {
     pub parent: Option<ParentPosition>,
     pub node_id: NodeId,
@@ -43,16 +48,19 @@ pub struct AddNode {
     pub attributes: HashMap<Cow<'static, str>, Attribute>,
 }
 
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct SwapNode {
     pub original: NodeId,
     pub new: AddNode,
 }
 
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct SwapNodeId {
     pub original: NodeId,
     pub new: NodeId,
 }
 
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub enum DiffOperation {
     SetAttribute(SetAttribute),
     RemoveAttribute(RemoveAttribute),
@@ -109,7 +117,7 @@ impl AddNode {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize)]
 pub struct ParentPosition {
     pub parent: NodeId,
     pub index: u64,

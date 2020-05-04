@@ -1,8 +1,8 @@
-use snafu::Snafu;
+use thiserror::Error;
 
-#[derive(Debug, Snafu)]
+#[derive(Error, Debug)]
 pub enum Error {
-    #[snafu(display("Operating system {} is not known.", name))]
+    #[error("Operating system {name} is not known.")]
     UnknownOperatingSystem{name: String},
 
 }

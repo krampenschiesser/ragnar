@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone,serde::Serialize,serde::Deserialize)]
 pub enum Attribute {
     Bool(bool),
     Text(Cow<'static, str>),

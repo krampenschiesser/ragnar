@@ -6,7 +6,7 @@ pub use native_callback::{NativeCallback, NativeCallbackWrapper};
 pub use local_callback::{LocalCallback, LocalCallbackWrapper};
 pub use app_callback::{AppCallback, AppCallbackWrapper};
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash,serde::Serialize,serde::Deserialize)]
 pub struct CallbackId(u64);
 
 #[derive(Debug, Clone, Copy)]

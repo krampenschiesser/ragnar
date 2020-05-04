@@ -9,5 +9,6 @@ members = [
 	"rsx-macro",
 ]
 exclude = [
-    "examples/todomvc/app"
+    "examples/todomvc/app",
+    "examples/todomvc/devserver"
 ]

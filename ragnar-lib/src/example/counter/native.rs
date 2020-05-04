@@ -16,7 +16,11 @@ pub struct Div {
 #[derive(Clone)]
 pub struct ClickEvent;
 
-impl NativeEvent for ClickEvent {}
+impl NativeEvent for ClickEvent {
+    fn get_type() -> &'static str where Self: Sized {
+        "example.counter.clickevent"
+    }
+}
 
 pub struct Button {
     pub title: Cow<'static, str>,

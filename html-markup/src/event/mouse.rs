@@ -31,4 +31,8 @@ pub struct MouseEvent {
     pub event: Event,
 }
 
-impl NativeEvent for MouseEvent {}
+impl NativeEvent for MouseEvent {
+    fn get_type() -> &'static str where Self: Sized {
+        "html.mouseevent"
+    }
+}

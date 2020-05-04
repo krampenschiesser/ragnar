@@ -6,4 +6,8 @@ pub struct FocusEvent {
     pub event: Event,
 }
 
-impl NativeEvent for FocusEvent {}
+impl NativeEvent for FocusEvent {
+    fn get_type() -> &'static str where Self: Sized {
+        "html.focusevent"
+    }
+}

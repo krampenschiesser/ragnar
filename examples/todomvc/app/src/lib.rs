@@ -6,8 +6,6 @@ extern crate ragnar_derive_component_builder;
 
 use ragnar_lib::{AppState, AppEvent};
 
-
-
 pub mod state;
 pub mod component;
 

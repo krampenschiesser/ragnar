@@ -11,7 +11,11 @@ pub struct InputEvent {
     pub event: Event,
 }
 
-impl NativeEvent for InputEvent {}
+impl NativeEvent for InputEvent {
+    fn get_type() -> &'static str where Self: Sized {
+        "html.inputevent"
+    }
+}
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub enum InputType {

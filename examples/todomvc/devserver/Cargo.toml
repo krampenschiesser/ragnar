@@ -8,4 +8,8 @@ edition = "2018"
 
 [dependencies]
 ragnar-dev-server-lib = {path = "../../../dev-server-lib"}
+ragnar-lib = {path = "../../../ragnar-lib"}
 app = {path = "../app"}
+actix-web = "2.0.0"
+actix-rt = "1.0.0"
+anyhow = "1.0.28"

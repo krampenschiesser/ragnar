@@ -1,14 +1,13 @@
 use std::borrow::Cow;
-
-use crate::callback::{NativeCallback, NativeCallbackWrapper, TypedCallbackRef};
-
-
-use crate::node::native_node::NativeNode;
 use downcast_rs::{Downcast, impl_downcast};
 
+use crate::callback::{NativeCallback, NativeCallbackWrapper, TypedCallbackRef};
 use crate::TypedInputCallbackRef;
+use crate::node::native_node::NativeNode;
 
-pub trait NativeEvent: Downcast {}
+pub trait NativeEvent: Downcast {
+    fn get_type() -> &'static str where Self: Sized;
+}
 impl_downcast!(NativeEvent);
 
 pub trait NativeComponent: NativeComponentWrapper {
@@ -44,7 +43,7 @@ impl NativeContext {
     pub fn forward(&self) -> Self {
         Self::default()
     }
-    pub fn create_callback<T, In, Out: 'static>(&mut self, name: T, callback: impl Fn(In) -> Out+ 'static) -> TypedCallbackRef<In, Out>
+    pub fn create_callback<T, In, Out: 'static>(&mut self, name: T, callback: impl Fn(In) -> Out + 'static) -> TypedCallbackRef<In, Out>
         where T: Into<Cow<'static, str>>, In: NativeEvent + 'static {
         let callback = NativeCallback::new(name, Box::new(callback));
         let callback_ref = callback.get_ref();

@@ -8,7 +8,7 @@ use std::marker::PhantomData;
 
 pub trait AppState {}
 
-pub trait AppEvent: Downcast + 'static {}
+pub trait AppEvent: Downcast + 'static + Unpin{}
 impl_downcast!(AppEvent);
 
 impl AppState for () {}
