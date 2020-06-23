@@ -1,13 +1,15 @@
-mod native_callback;
-mod local_callback;
 mod app_callback;
+mod local_callback;
+mod native_callback;
 
-pub use native_callback::{NativeCallback, NativeCallbackWrapper};
-pub use local_callback::{LocalCallback, LocalCallbackWrapper};
 pub use app_callback::{AppCallback, AppCallbackWrapper};
+pub use local_callback::{LocalCallback, LocalCallbackWrapper};
+pub use native_callback::{NativeCallback, NativeCallbackWrapper};
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash,serde::Serialize,serde::Deserialize)]
-pub struct CallbackId(u64);
+#[derive(
+    Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash, serde::Serialize, serde::Deserialize,
+)]
+pub struct CallbackId(pub u64);
 
 #[derive(Debug, Clone, Copy)]
 pub struct TypedInputCallbackRef<In> {

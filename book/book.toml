@@ -3,3 +3,5 @@ authors = ["krampenschiesser"]
 multilingual = false
 src = "src"
 title = "ragnar"
+
+[preprocessor.puml]

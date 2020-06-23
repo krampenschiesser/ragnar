@@ -1,70 +1,129 @@
 #[macro_use]
 extern crate log;
 
-use actix_web::{HttpServer, App, web, HttpRequest, HttpResponse};
-use ragnar_lib::{AppState, AppComponent, AppEvent};
 use anyhow::Result;
-use std::sync::{Mutex, Arc, RwLock};
+use ragnar_lib::{App, AppComponent, AppEvent, AppState};
 
-use crate::command_line::OperatingSystem;
-use crate::actors::statelauncher::StateLauncher;
-use actix::{Actor, Addr};
-use crate::actors::websocket::WebsocketActor;
+use crate::messages::{WebsocketRequest, WebsocketResponse};
+use crate::state::state_container::StateContainer;
+use futures::lock::Mutex;
+use std::sync::Arc;
+use warp::filters::ws::Message;
+use warp::ws::WebSocket;
 
+mod actor;
 mod command_line;
 mod error;
+mod messages;
+mod os;
+mod state;
 mod state_persistence;
-pub(crate) mod actors;
 
-pub(crate) trait StateExt: AppState + Clone + serde::Serialize + serde::de::DeserializeOwned + std::marker::Unpin + 'static {}
-
-pub(crate) trait EventExt: AppEvent + Clone + serde::Serialize + serde::de::DeserializeOwned + std::marker::Unpin + 'static {}
-
-impl<T> StateExt for T where T: AppState + Clone + serde::Serialize + serde::de::DeserializeOwned + std::marker::Unpin + 'static {}
-
-impl<T> EventExt for T where T: AppEvent + Clone + serde::Serialize + serde::de::DeserializeOwned + std::marker::Unpin + 'static {}
-
-#[cfg(feature = "web")]
-pub static OPERATING_SYSTEM: OperatingSystem = OperatingSystem::Web;
-#[cfg(feature = "ios")]
-pub static OPERATING_SYSTEM: OperatingSystem = OperatingSystem::Ios;
-#[cfg(feature = "android")]
-pub static OPERATING_SYSTEM: OperatingSystem = OperatingSystem::Android;
-#[cfg(feature = "windows")]
-pub static OPERATING_SYSTEM: OperatingSystem = OperatingSystem::Windows;
-#[cfg(feature = "linux")]
-pub static OPERATING_SYSTEM: OperatingSystem = OperatingSystem::Linux;
-#[cfg(feature = "mac")]
-pub static OPERATING_SYSTEM: OperatingSystem = OperatingSystem::Mac;
-
-
-pub async fn start<C, State, Msg>(app: ragnar_lib::App<C, State, Msg>) -> Result<()>
-    where State: StateExt,
-          Msg: EventExt,
-          C: AppComponent<State=State, Msg=Msg> {
-    let launcher: Addr<StateLauncher<State, Msg>> = StateLauncher::new(app.initial_state).start();
-
-
-    println!("{:?}", OPERATING_SYSTEM);
-
-    let data = actix_web::web::Data::new(launcher);
-    HttpServer::new(move || {
-        App::new().data(data.clone())
-            .route("/ws", web::get().to(wsstart::<State, Msg>))
-        // .route("/again", web::get().to(index2))
-    })
-        .bind("127.0.0.1:8088")?
-        .run()
-        .await
-        .map_err(|e| e.into())
+pub trait StateExt:
+    AppState + Clone + serde::Serialize + serde::de::DeserializeOwned + Send + Sync + 'static
+{
 }
 
+pub trait EventExt:
+    AppEvent + Clone + serde::Serialize + serde::de::DeserializeOwned + Send + Sync + 'static
+{
+}
 
-async fn wsstart<State, Msg>(req: HttpRequest, stream: web::Payload) -> Result<HttpResponse, actix_web::error::Error>
-    where State: StateExt,
-          Msg: EventExt {
-    let data: &Addr<actors::statelauncher::StateLauncher<State, Msg>> = req.app_data().unwrap();
-    let resp = actix_web_actors::ws::start(WebsocketActor { addr: data.clone(), state: None }, &req, stream);
-    println!("{:?}", resp);
-    resp
+impl<T> StateExt for T where
+    T: AppState + Clone + serde::Serialize + serde::de::DeserializeOwned + Send + Sync + 'static
+{
+}
+
+impl<T> EventExt for T where
+    T: AppEvent + Clone + serde::Serialize + serde::de::DeserializeOwned + Send + Sync + 'static
+{
+}
+
+pub async fn start<C, State, Msg>(app: App<C, State, Msg>) -> Result<()>
+where
+    State: StateExt,
+    Msg: EventExt,
+    C: AppComponent<State = State, Msg = Msg> + Clone + Send + Sync + 'static,
+{
+    use warp::Filter;
+    let state = Arc::new(Mutex::new(StateContainer::new(app.clone())));
+
+    let routes = warp::path("ws")
+        .and(warp::ws())
+        .map(move |ws: warp::ws::Ws| {
+            let state = state.clone();
+            ws.on_upgrade(move |websocket| handle_new_websocket(websocket, state))
+        });
+
+    warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
+    Ok(())
+}
+
+async fn handle_new_websocket<C, S, M>(
+    websocket: WebSocket,
+    state: Arc<Mutex<StateContainer<C, S, M>>>,
+) where
+    S: StateExt,
+    M: EventExt,
+    C: AppComponent<State = S, Msg = M> + Send + Sync + Clone,
+{
+    match handle_new_websocket_internal(websocket, state).await {
+        Err(e) => error!("Error handling websocket {}", e),
+        Ok(_) => (),
+    }
+}
+
+async fn handle_new_websocket_internal<C, S, M>(
+    websocket: WebSocket,
+    state: Arc<Mutex<StateContainer<C, S, M>>>,
+) -> anyhow::Result<()>
+where
+    S: StateExt,
+    M: EventExt,
+    C: AppComponent<State = S, Msg = M> + Send + Sync + Clone,
+{
+    use futures::{FutureExt, SinkExt, StreamExt};
+
+    let (mut tx, mut rx) = websocket.split();
+
+    let client_id = {
+        let state = state.lock().await;
+
+        state.next_client_id()
+    };
+
+    while let Some(msg) = rx.next().await {
+        let msg = msg?;
+        if msg.is_text() {
+            let req: WebsocketRequest = serde_json::from_str(msg.to_str().unwrap())?;
+            match req {
+                WebsocketRequest::JoinSession(session) => {
+                    let guard = state.lock().await;
+                    let res = guard.join_session(session, client_id).await?;
+
+                    let mut items = vec![
+                        Message::text(serde_json::to_string(&WebsocketResponse::Registered(
+                            client_id,
+                        ))?),
+                        Message::text(serde_json::to_string(&WebsocketResponse::Clear)?),
+                        Message::text(serde_json::to_string(&WebsocketResponse::Diff(res))?),
+                    ];
+                    let mut stream = futures::stream::iter(items.into_iter()).map(Ok);
+                    tx.send_all(&mut stream).await?;
+                }
+                WebsocketRequest::NativeEvent {
+                    session,
+                    callback_id,
+                    event_type,
+                    payload,
+                } => {
+                    let guard = state.lock().await;
+                    let res = guard
+                        .handle_native_event(session, client_id, callback_id, event_type, payload)
+                        .await?;
+                }
+            }
+        }
+    }
+    Ok(())
 }

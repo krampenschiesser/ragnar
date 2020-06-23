@@ -10,6 +10,6 @@ edition = "2018"
 ragnar-dev-server-lib = {path = "../../../dev-server-lib"}
 ragnar-lib = {path = "../../../ragnar-lib"}
 app = {path = "../app"}
-actix-web = "2.0.0"
-actix-rt = "1.0.0"
+tokio = { version = "0.2", features = ["macros"] }
 anyhow = "1.0.28"
+ragnar-html-markup = {path = "../../../html-markup"}

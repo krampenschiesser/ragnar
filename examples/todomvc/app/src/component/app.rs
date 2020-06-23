@@ -1,8 +1,8 @@
-use ragnar_lib::{AppComponent, AppNode, AppContext, Node};
-use crate::state::{Msg, State, Task, Filter};
+use crate::state::{Filter, Msg, State, Task};
 use ragnar_html_markup::event::{InputEvent, KeyboardEvent};
+use ragnar_lib::{AppComponent, AppContext, AppNode, Node};
 
-#[derive(Component)]
+#[derive(Component, Clone)]
 pub struct App {}
 
 impl AppComponent for App {
@@ -91,7 +91,7 @@ impl App {
         }
     }
 
-    pub fn view_filter(&self,filter: &Filter,state: &State) -> Node {
-        node!{<FilterView filter={filter.clone()} />}
+    pub fn view_filter(&self, filter: &Filter, state: &State) -> Node {
+        node! {<FilterView filter={filter.clone()} />}
     }
 }

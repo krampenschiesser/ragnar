@@ -1,4 +1,5 @@
 use crate::global::file::File;
+use ragnar_lib::NativeEvent;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct DataTransfer {
@@ -7,6 +8,15 @@ pub struct DataTransfer {
     pub files: Vec<File>,
     pub items: Vec<DataTransferItem>,
     pub mime_types: Vec<String>,
+}
+
+impl NativeEvent for DataTransfer {
+    fn get_type() -> &'static str
+    where
+        Self: Sized,
+    {
+        "html.datatransfer"
+    }
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]

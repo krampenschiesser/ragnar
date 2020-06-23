@@ -1,34 +1,115 @@
 use std::any::Any;
 
-use crate::app_component::{AppComponent, AppEvent, AppState, AppContext};
-use crate::callback::{AppCallbackWrapper, CallbackId, LocalCallbackWrapper, NativeCallbackWrapper};
+use crate::app_component::{AppComponent, AppContext, AppEvent, AppState};
+use crate::callback::{
+    AppCallbackWrapper, CallbackId, LocalCallbackWrapper, NativeCallbackWrapper,
+};
 use crate::local_component::LocalHandleResult;
 use crate::native_component::NativeEvent;
 use crate::node::app_node::UntypedAppNode;
 use crate::node::NodeId;
-use crate::runtime::diff::{CompleteDiff, DiffError};
 use crate::runtime::diff::operations::{DiffOperation, ParentPosition};
+use crate::runtime::diff::{CompleteDiff, DiffError};
 use crate::runtime::node_container::NodeContainer;
 
 use super::node::Node;
+use crate::App;
+use std::sync::Arc;
 
-mod node_container;
 pub(crate) mod diff;
+mod node_container;
 
-pub struct Runtime<C: AppComponent<State=State, Msg=Msg>, State: AppState, Msg: AppEvent> {
+pub struct Runtime<
+    C: AppComponent<State = State, Msg = Msg> + Clone,
+    State: AppState + Clone,
+    Msg: AppEvent,
+> {
     root_component: C,
     root: NodeContainer,
     state: State,
-    update_function: Box<dyn Fn(&mut State, &Msg)>,
+    pub update_function: Arc<Box<dyn Fn(&mut State, &Msg) + Send + Sync + 'static>>,
+    native_event_resolvers: Arc<
+        Vec<
+            Box<
+                dyn Fn(&str, &str) -> Result<Option<Box<dyn NativeEvent>>, String>
+                    + Send
+                    + Sync
+                    + 'static,
+            >,
+        >,
+    >,
 }
 
-impl<C: AppComponent<State=State, Msg=Msg>, State: AppState, Msg: AppEvent> Runtime<C, State, Msg> {
-    pub fn handle_event(&mut self, id: CallbackId, event: Box<dyn NativeEvent>) -> Result<Vec<DiffOperation>, DiffError> {
+impl<C: AppComponent<State = State, Msg = Msg> + Clone, State: AppState + Clone, Msg: AppEvent>
+    Clone for Runtime<C, State, Msg>
+{
+    fn clone(&self) -> Self {
+        let root_component = self.root_component.clone();
+        let result = root_component.render(&self.state, AppContext::new());
+        let node_container = NodeContainer::from_root(result.into());
+        Self {
+            root_component,
+            root: node_container,
+            state: self.state.clone(),
+            update_function: self.update_function.clone(),
+            native_event_resolvers: self.native_event_resolvers.clone(),
+        }
+    }
+}
+
+impl<C: AppComponent<State = State, Msg = Msg> + Clone, State: AppState + Clone, Msg: AppEvent>
+    Runtime<C, State, Msg>
+{
+    pub fn new(app: &App<C, State, Msg>) -> Self {
+        let state = app.initial_state.clone();
+        let root = app.root_component.render(&state, AppContext::new());
+        Self {
+            update_function: app.update_function.clone(),
+            state,
+            root_component: app.root_component.clone(),
+            root: NodeContainer::from_root(root.into()),
+            native_event_resolvers: app.native_event_resolvers.clone(),
+        }
+    }
+    pub fn initial_diff(&self) -> Vec<DiffOperation> {
+        let init = Vec::new();
+        let native_view = self.root.native_view(None);
+        CompleteDiff::new(&init, &native_view).diff()
+    }
+
+    pub fn set_state(&mut self, state: State) {
+        self.state = state;
+    }
+
+    pub fn resolve_native_event(
+        &self,
+        event_type: &str,
+        payload: &str,
+    ) -> Result<Box<dyn NativeEvent>, String> {
+        for resolver in self.native_event_resolvers.iter() {
+            if let Some(event) = (resolver)(event_type, payload)? {
+                return Ok(event);
+            }
+        }
+        Err(format!("Could not find a handler for event_type='{}'. {} resolvers registered in App#native_event_resolvers",event_type,self.native_event_resolvers.len()))
+    }
+    pub fn handle_event(
+        &mut self,
+        id: CallbackId,
+        event: Box<dyn NativeEvent>,
+    ) -> Result<Vec<DiffOperation>, DiffError> {
         let mut handling_result = EventHandlingResult::new();
-        let callback = self.root.native_callbacks.get(&id).ok_or(DiffError::NewCallbackNotFound(id))?;
+        let callback = self
+            .root
+            .native_callbacks
+            .get(&id)
+            .ok_or(DiffError::NewCallbackNotFound(id))?;
         self.execute_native_callback(&callback, event, &mut handling_result)?;
 
-        let EventHandlingResult { state_changes, local_node_updates: node_updates } = handling_result;
+        let EventHandlingResult {
+            state_changes,
+            local_node_updates: node_updates,
+        } = handling_result;
         if state_changes.is_empty() {
             let mut diff_ops = Vec::new();
             let changed_nodes = self.update_local_nodes(node_updates);
@@ -43,22 +124,30 @@ impl<C: AppComponent<State=State, Msg=Msg>, State: AppState, Msg: AppEvent> Runt
         } else {
             let new_node = self.update(state_changes);
             let new_container = NodeContainer::from_root(new_node);
-            let result = CompleteDiff::new(&self.root.native_view(None), &new_container.native_view(None)).diff();
+            let result = CompleteDiff::new(
+                &self.root.native_view(None),
+                &new_container.native_view(None),
+            )
+            .diff();
             self.root = new_container;
             Ok(result)
         }
     }
 
-    fn update_local_nodes(&mut self, updates: Vec<(Box<dyn Any>, NodeId)>) -> Vec<(NodeId, NodeContainer, Option<ParentPosition>)> {
+    fn update_local_nodes(
+        &mut self,
+        updates: Vec<(Box<dyn Any>, NodeId)>,
+    ) -> Vec<(NodeId, NodeContainer, Option<ParentPosition>)> {
         let mut nodes_that_need_diff = Vec::new();
         for (boxed, id) in updates {
             //TODO remove children if parent gets updated
 
-            let handle_result: LocalHandleResult = if let Some(stripped_node) = self.root.local_nodes.get(&id) {
-                stripped_node.component.handle(&boxed)
-            } else {
-                LocalHandleResult::Keep
-            };
+            let handle_result: LocalHandleResult =
+                if let Some(stripped_node) = self.root.local_nodes.get(&id) {
+                    stripped_node.component.handle(&boxed)
+                } else {
+                    LocalHandleResult::Keep
+                };
 
             let node_to_diff = match handle_result {
                 LocalHandleResult::Keep => None,
@@ -85,11 +174,17 @@ impl<C: AppComponent<State=State, Msg=Msg>, State: AppState, Msg: AppEvent> Runt
                 (self.update_function)(&mut self.state, event);
             }
         }
-        self.root_component.render(&self.state, AppContext::new()).into()
+        self.root_component
+            .render(&self.state, AppContext::new())
+            .into()
     }
 
-
-    fn execute_callback(&self, id: CallbackId, event: &Box<dyn Any>, handling_result: &mut EventHandlingResult) -> Result<(), DiffError> {
+    fn execute_callback(
+        &self,
+        id: CallbackId,
+        event: &Box<dyn Any>,
+        handling_result: &mut EventHandlingResult,
+    ) -> Result<(), DiffError> {
         if let Some(callback) = self.root.local_callbacks.get(&id) {
             self.execute_local_callback(callback, event, handling_result)
         } else if let Some(callback) = self.root.app_callbacks.get(&id) {
@@ -98,7 +193,12 @@ impl<C: AppComponent<State=State, Msg=Msg>, State: AppState, Msg: AppEvent> Runt
             Err(DiffError::NewCallbackNotFound(id))
         }
     }
-    fn execute_native_callback(&self, callback: &NativeCallbackWrapper, event: Box<dyn NativeEvent>, handling_result: &mut EventHandlingResult) -> Result<(), DiffError> {
+    fn execute_native_callback(
+        &self,
+        callback: &NativeCallbackWrapper,
+        event: Box<dyn NativeEvent>,
+        handling_result: &mut EventHandlingResult,
+    ) -> Result<(), DiffError> {
         if let Some(output) = (callback.callback)(event) {
             if callback.chained.is_empty() {
                 warn!("Native callback is not chained, its output will be lost. Callback={:?}, node={:?}", callback.id, callback.node_id);
@@ -110,7 +210,12 @@ impl<C: AppComponent<State=State, Msg=Msg>, State: AppState, Msg: AppEvent> Runt
         }
         Ok(())
     }
-    fn execute_local_callback(&self, callback: &LocalCallbackWrapper, event: &Box<dyn Any>, handling_result: &mut EventHandlingResult) -> Result<(), DiffError> {
+    fn execute_local_callback(
+        &self,
+        callback: &LocalCallbackWrapper,
+        event: &Box<dyn Any>,
+        handling_result: &mut EventHandlingResult,
+    ) -> Result<(), DiffError> {
         if let Some(output) = (callback.callback)(event) {
             if callback.chained.is_empty() {
                 handling_result.add_local(output, callback.node_id);
@@ -122,7 +227,12 @@ impl<C: AppComponent<State=State, Msg=Msg>, State: AppState, Msg: AppEvent> Runt
         }
         Ok(())
     }
-    fn execute_app_callback(&self, callback: &AppCallbackWrapper, event: &Box<dyn Any>, handling_result: &mut EventHandlingResult) -> Result<(), DiffError> {
+    fn execute_app_callback(
+        &self,
+        callback: &AppCallbackWrapper,
+        event: &Box<dyn Any>,
+        handling_result: &mut EventHandlingResult,
+    ) -> Result<(), DiffError> {
         let handler = callback.callback.replace(None);
         if let Some(handler) = handler {
             if let Some(output) = (handler)(event) {
@@ -161,7 +271,6 @@ impl EventHandlingResult {
         self.state_changes.push(event);
     }
 }
-
 
 struct SwappedNode {
     old_node: Node,

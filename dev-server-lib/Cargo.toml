@@ -19,16 +19,15 @@ windows = []
 [dependencies]
 ragnar-lib = { path = "../ragnar-lib"}
 structopt = "0.3.12"
-actix-web = "2.0.0"
-actix-web-actors = "2.0.0"
-actix = "0.9.0"
 anyhow = "1.0.28"
 thiserror = "1.0.15"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 log = "0.4.8"
 ctrlc = { version="3.1.4", features = ["termination"]}
-actors-rs = "0.1"
-
+futures = "0.3.5"
+warp = "0.2.3"
+futures-util = "0.3.5"
+tokio = "0.2.21"
 [dev-dependencies]
 env_logger = "0.7.1"

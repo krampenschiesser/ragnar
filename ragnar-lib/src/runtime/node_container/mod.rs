@@ -1,18 +1,21 @@
 use std::collections::HashMap;
 use std::rc::Rc;
 
-
-use crate::callback::{AppCallbackWrapper, CallbackId, LocalCallbackWrapper, NativeCallbackWrapper};
+use crate::callback::{
+    AppCallbackWrapper, CallbackId, LocalCallbackWrapper, NativeCallbackWrapper,
+};
 use crate::local_component::LocalComponentWrapper;
-use crate::node::{Node, NodeId, TextNode};
 use crate::node::app_node::{Converter, UntypedAppNode};
 use crate::node::local_node::LocalNode;
 use crate::node::native_node::NativeNode;
+use crate::node::{Node, NodeId, TextNode};
 
 use crate::runtime::diff::operations::ParentPosition;
-use crate::runtime::node_container::stripped_node::{StrippedAppNode, StrippedLocalNode, StrippedNativeNode, StrippedNode};
-use std::borrow::Cow;
+use crate::runtime::node_container::stripped_node::{
+    StrippedAppNode, StrippedLocalNode, StrippedNativeNode, StrippedNode,
+};
 use crate::Attribute;
+use std::borrow::Cow;
 
 pub mod stripped_node;
 
@@ -28,7 +31,6 @@ pub struct NodeContainer {
 
     pub root_node: NodeId,
 }
-
 
 impl NodeContainer {
     pub fn new(root: NodeId) -> Self {
@@ -65,12 +67,26 @@ impl NodeContainer {
 
     fn get_native_nodes<'a, 'b>(&'a self, node_id: &'b NodeId) -> Vec<NativeView<'a>> {
         if let Some(node) = self.app_nodes.get(&node_id) {
-            node.children.iter().flat_map(|c| self.get_native_nodes(c).into_iter()).collect()
+            node.children
+                .iter()
+                .flat_map(|c| self.get_native_nodes(c).into_iter())
+                .collect()
         } else if let Some(node) = self.local_nodes.get(&node_id) {
-            node.children.iter().flat_map(|c| self.get_native_nodes(c).into_iter()).collect()
+            node.children
+                .iter()
+                .flat_map(|c| self.get_native_nodes(c).into_iter())
+                .collect()
         } else if let Some(node) = self.native_nodes.get(&node_id) {
-            let views: Vec<_> = node.children.iter().flat_map(|c| self.get_native_nodes(c).into_iter()).collect();
-            let callbacks = node.callbacks.iter().filter_map(|cid| self.native_callbacks.get(cid)).collect();
+            let views: Vec<_> = node
+                .children
+                .iter()
+                .flat_map(|c| self.get_native_nodes(c).into_iter())
+                .collect();
+            let callbacks = node
+                .callbacks
+                .iter()
+                .filter_map(|cid| self.native_callbacks.get(cid))
+                .collect();
             let view = NativeNodeView {
                 node,
                 callbacks,
@@ -82,7 +98,12 @@ impl NodeContainer {
         }
     }
 
-    fn add_app_node(&mut self, node: UntypedAppNode, parent: Option<NodeId>, converters: Option<Vec<Rc<Converter>>>) {
+    fn add_app_node(
+        &mut self,
+        node: UntypedAppNode,
+        parent: Option<NodeId>,
+        converters: Option<Vec<Rc<Converter>>>,
+    ) {
         let (node, callbacks, children) = node.into_stripped(parent, converters);
         callbacks.into_iter().for_each(|c| {
             self.app_callbacks.insert(c.id, c);
@@ -93,7 +114,12 @@ impl NodeContainer {
         self.app_nodes.insert(node.id, node);
     }
 
-    fn add_local_node(&mut self, node: LocalNode, parent: Option<NodeId>, converters: Option<Vec<Rc<Converter>>>) {
+    fn add_local_node(
+        &mut self,
+        node: LocalNode,
+        parent: Option<NodeId>,
+        converters: Option<Vec<Rc<Converter>>>,
+    ) {
         let (node, callbacks, children) = node.into_stripped(parent);
         callbacks.into_iter().for_each(|c| {
             self.local_callbacks.insert(c.id, c);
@@ -104,7 +130,12 @@ impl NodeContainer {
         self.local_nodes.insert(node.id, node);
     }
 
-    fn add_native_node(&mut self, node: NativeNode, parent: Option<NodeId>, converters: Option<Vec<Rc<Converter>>>) {
+    fn add_native_node(
+        &mut self,
+        node: NativeNode,
+        parent: Option<NodeId>,
+        converters: Option<Vec<Rc<Converter>>>,
+    ) {
         let (node, callbacks, children) = node.into_stripped(parent);
         callbacks.into_iter().for_each(|c| {
             self.native_callbacks.insert(c.id, c);
@@ -115,12 +146,16 @@ impl NodeContainer {
         self.native_nodes.insert(node.id, node);
     }
 
-
     fn add_text_node(&mut self, node: TextNode) {
         self.text_nodes.insert(node.id, node);
     }
 
-    fn add_node(&mut self, node: Node, parent: Option<NodeId>, converters: Option<Vec<Rc<Converter>>>) {
+    fn add_node(
+        &mut self,
+        node: Node,
+        parent: Option<NodeId>,
+        converters: Option<Vec<Rc<Converter>>>,
+    ) {
         match node {
             Node::Local(node) => self.add_local_node(node, parent, converters),
             Node::Native(node) => self.add_native_node(node, parent, converters),
@@ -129,12 +164,20 @@ impl NodeContainer {
         }
     }
 
-    pub(crate) fn swap_node_component(&mut self, id: &NodeId, state: Box<dyn LocalComponentWrapper>) {
+    pub(crate) fn swap_node_component(
+        &mut self,
+        id: &NodeId,
+        state: Box<dyn LocalComponentWrapper>,
+    ) {
         if let Some(n) = self.local_nodes.get_mut(id) {
             n.component = state;
         }
     }
-    pub(crate) fn replace_local_node(&mut self, new_node: LocalNode, old_node_id: NodeId) -> Option<(Option<ParentPosition>, NodeContainer)> {
+    pub(crate) fn replace_local_node(
+        &mut self,
+        new_node: LocalNode,
+        old_node_id: NodeId,
+    ) -> Option<(Option<ParentPosition>, NodeContainer)> {
         if let Some(old_node) = self.local_nodes.remove(&old_node_id) {
             let parent = old_node.parent;
             let index = self.replace_child_in_parent(&old_node_id, new_node.id, &parent);
@@ -142,7 +185,10 @@ impl NodeContainer {
             self.remove_local_recursive(old_node, &mut container);
             self.add_node(Node::Local(new_node), parent, None);
             let parent = if let Some((p, i)) = parent.and_then(|p| index.map(|i| (p, i))) {
-                Some(ParentPosition { parent: p, index: i as u64 })
+                Some(ParentPosition {
+                    parent: p,
+                    index: i as u64,
+                })
             } else {
                 None
             };
@@ -153,11 +199,15 @@ impl NodeContainer {
     }
     fn remove_and_add_callback(&mut self, callback_id: &CallbackId, container: &mut NodeContainer) {
         if let Some(local_callback) = self.local_callbacks.remove(callback_id) {
-            container.local_callbacks.insert(*callback_id, local_callback);
+            container
+                .local_callbacks
+                .insert(*callback_id, local_callback);
         } else if let Some(app_callback) = self.app_callbacks.remove(callback_id) {
             container.app_callbacks.insert(*callback_id, app_callback);
         } else if let Some(native_callback) = self.native_callbacks.remove(callback_id) {
-            container.native_callbacks.insert(*callback_id, native_callback);
+            container
+                .native_callbacks
+                .insert(*callback_id, native_callback);
         }
     }
     fn remove_local_recursive(&mut self, node: StrippedLocalNode, container: &mut NodeContainer) {
@@ -188,20 +238,33 @@ impl NodeContainer {
         });
     }
 
-    fn remove_callbacks_and_parent<T: StrippedNode>(&mut self, node: &T, container: &mut NodeContainer) {
+    fn remove_callbacks_and_parent<T: StrippedNode>(
+        &mut self,
+        node: &T,
+        container: &mut NodeContainer,
+    ) {
         node.get_callbacks().iter().for_each(|cid| {
             self.remove_and_add_callback(cid, container);
         });
         if let Some(parent) = node.get_parent() {
             if let Some(parent) = self.get_node_mut(&parent) {
-                if let Some(index) = parent.get_children().iter().position(|cid| cid == &node.get_id()) {
+                if let Some(index) = parent
+                    .get_children()
+                    .iter()
+                    .position(|cid| cid == &node.get_id())
+                {
                     parent.get_children_mut().remove(index);
                 }
             }
         }
     }
 
-    fn replace_child_in_parent(&mut self, old_node_id: &NodeId, new_node_id: NodeId, parent: &Option<NodeId>) -> Option<usize> {
+    fn replace_child_in_parent(
+        &mut self,
+        old_node_id: &NodeId,
+        new_node_id: NodeId,
+        parent: &Option<NodeId>,
+    ) -> Option<usize> {
         if let Some(parent_pos) = parent {
             if let Some(parent) = self.get_node_mut(parent_pos) {
                 return parent.replace_child(old_node_id, new_node_id);

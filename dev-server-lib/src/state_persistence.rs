@@ -1,27 +1,31 @@
-use ragnar_lib::{AppState, AppEvent};
-use std::collections::HashMap;
-use crate::error::Error;
-use std::path::PathBuf;
-use std::fs::File;
-use std::io::{BufReader, Read, BufWriter};
+use crate::{EventExt, StateExt};
 use anyhow::Result;
-use crate::{StateExt, EventExt};
+use std::fs::File;
+use std::io::{BufReader, BufWriter};
+use std::path::PathBuf;
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(serde::Serialize, serde::Deserialize, Clone)]
 pub struct SingleState<State, Msg>
-    where State: AppState + Clone + serde::Serialize,
-          Msg: AppEvent + Clone+ serde::Serialize
+where
+    State: StateExt,
+    Msg: EventExt,
 {
+    #[serde(deserialize_with = "State::deserialize")]
     original: State,
+    #[serde(bound = "")]
     msgs: Vec<Msg>,
-    current: State,
+    #[serde(deserialize_with = "State::deserialize")]
+    pub current: State,
 }
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(serde::Serialize, serde::Deserialize, Clone)]
 pub struct StrippedSingleState<State>
-    where State: AppState + Clone,
+where
+    State: StateExt,
 {
+    #[serde(deserialize_with = "State::deserialize")]
     original: State,
+    #[serde(deserialize_with = "State::deserialize")]
     current: State,
 }
 
@@ -36,17 +40,27 @@ impl<State: StateExt, Msg: EventExt> Into<SingleState<State, Msg>> for StrippedS
 }
 
 impl<State: StateExt, Msg: EventExt> SingleState<State, Msg> {
-    pub fn load(name: &str, initial: State) -> Result<Self> {
-        let default_value = Ok(SingleState {
-            original: initial.clone(),
-            msgs: Vec::new(),
-            current: initial.clone(),
-        });
+    pub fn load(name: &str) -> Option<Self> {
+        match SingleState::load_internal(name) {
+            Ok(s) => s,
+            Err(e) => {
+                error!(
+                    "Could not load session state for session '{}'. Exception: {}\n{}",
+                    name,
+                    e,
+                    e.backtrace()
+                );
+                None
+            }
+        }
+    }
+
+    fn load_internal(name: &str) -> Result<Option<Self>> {
         let dir = std::env::current_dir()?;
         let file = dir.join(format!("{}-state.json", name));
         if !file.exists() {
-            info!("No state found in {:?} will use initial", file);
-            return default_value;
+            let msg = format!("No state found in {:?} will use initial", file);
+            return Err(anyhow::Error::msg(msg));
         }
         let state = match Self::load_full_from_file(&file) {
             Ok(s) => Some(s),
@@ -63,12 +77,14 @@ impl<State: StateExt, Msg: EventExt> SingleState<State, Msg> {
                     None
                 }
             }
-        } else { state };
+        } else {
+            state
+        };
         if let Some(state) = state {
-            Ok(state)
+            Ok(Some(state))
         } else {
             info!("No state found in {:?} will use initial", file);
-            default_value
+            Ok(None)
         }
     }
 
