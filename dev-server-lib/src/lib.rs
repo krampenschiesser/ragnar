@@ -121,6 +121,10 @@ where
                     let res = guard
                         .handle_native_event(session, client_id, callback_id, event_type, payload)
                         .await?;
+                    tx.send(Message::text(serde_json::to_string(
+                        &WebsocketResponse::Diff(res),
+                    )?))
+                    .await?
                 }
             }
         }
