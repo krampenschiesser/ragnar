@@ -10,6 +10,8 @@ pub enum WebsocketRequest {
         event_type: String,
         payload: String,
     },
+    ListSessions,
+    GetSingleState(SessionId),
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -30,6 +32,7 @@ pub enum SessionRequest {
         event_type: String,
         payload: String,
     },
+    Quit,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]

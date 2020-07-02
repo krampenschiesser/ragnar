@@ -82,7 +82,7 @@ where
     M: EventExt,
     C: AppComponent<State = S, Msg = M> + Send + Sync + Clone,
 {
-    use futures::{FutureExt, SinkExt, StreamExt};
+    use futures::{SinkExt, StreamExt};
 
     let (mut tx, mut rx) = websocket.split();
 
@@ -101,7 +101,7 @@ where
                     let guard = state.lock().await;
                     let res = guard.join_session(session, client_id).await?;
 
-                    let mut items = vec![
+                    let items = vec![
                         Message::text(serde_json::to_string(&WebsocketResponse::Registered(
                             client_id,
                         ))?),

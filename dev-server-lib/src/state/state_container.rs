@@ -2,6 +2,7 @@ use super::ClientId;
 use crate::actor::session_actor::SessionActor;
 use crate::messages::{SessionRequest, SessionResponse};
 use crate::state::SessionId;
+use crate::state_persistence::SingleState;
 use crate::{EventExt, StateExt};
 use futures::lock::Mutex;
 use ragnar_lib::{App, AppComponent, CallbackId, DiffOperation};
@@ -49,13 +50,30 @@ impl<
 
     async fn create_actor_if_not_exists(&self, session_id: SessionId) -> anyhow::Result<()> {
         let mut map = self.actors.lock().await;
-        let app = self.app.clone();
         if !map.contains_key(&session_id) {
+            let mut app = self.app.clone();
+            if let Some(state) = SingleState::<State, Msg>::load(session_id.as_str()) {
+                app.initial_state = state.current;
+            }
+
             let (sender, receiver) = tokio::sync::oneshot::channel();
+            let thread_session_id = session_id.clone();
             std::thread::spawn(move || {
-                let (actor, send) = SessionActor::new(&app, SessionId("bla".into()));
-                sender.send(send);
-                actor.handle();
+                let (actor, send) = SessionActor::new(&app, thread_session_id.clone());
+                if let Err(_) = sender.send(send) {
+                    error!(
+                        "Could not return the sender handle for session {}",
+                        &thread_session_id
+                    );
+                }
+                if let Err(e) = actor.handle() {
+                    error!(
+                        "Error occurred while handling single state actor for session {}: {}.\n{}",
+                        &thread_session_id,
+                        e,
+                        e.backtrace()
+                    );
+                }
             });
             let res = receiver.await?;
             map.insert(session_id.clone(), res);

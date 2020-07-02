@@ -1,8 +1,23 @@
+use crate::state::ClientId;
 use crate::{EventExt, StateExt};
 use anyhow::Result;
 use std::fs::File;
 use std::io::{BufReader, BufWriter};
 use std::path::PathBuf;
+
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
+pub enum StoredMessage<Msg: EventExt> {
+    NativeEvent {
+        event_id: u64,
+        event_type: String,
+        payload: String,
+        client: ClientId,
+    },
+    AppEvent {
+        event_id: u64,
+        message: Msg,
+    },
+}
 
 #[derive(serde::Serialize, serde::Deserialize, Clone)]
 pub struct SingleState<State, Msg>
@@ -109,7 +124,7 @@ impl<State: StateExt, Msg: EventExt> SingleState<State, Msg> {
         let dir = std::env::current_dir()?;
         let file = dir.join(format!("{}-state.json", name));
 
-        let mut file = File::open(file)?;
+        let file = File::open(file)?;
         let writer = BufWriter::new(file);
         serde_json::to_writer(writer, self)?;
         Ok(())

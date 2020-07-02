@@ -13,11 +13,14 @@ use crate::runtime::diff::{CompleteDiff, DiffError};
 use crate::runtime::node_container::NodeContainer;
 
 use super::node::Node;
+use crate::runtime::observer::timingcategory::RuntimeTimingCategory;
+use crate::runtime::observer::{RuntimeObserver, Timer};
 use crate::App;
 use std::sync::Arc;
 
 pub(crate) mod diff;
 mod node_container;
+pub mod observer;
 
 pub struct Runtime<
     C: AppComponent<State = State, Msg = Msg> + Clone,
@@ -27,6 +30,7 @@ pub struct Runtime<
     root_component: C,
     root: NodeContainer,
     state: State,
+    observer: Arc<RuntimeObserver>,
     pub update_function: Arc<Box<dyn Fn(&mut State, &Msg) + Send + Sync + 'static>>,
     native_event_resolvers: Arc<
         Vec<
@@ -53,6 +57,7 @@ impl<C: AppComponent<State = State, Msg = Msg> + Clone, State: AppState + Clone,
             state: self.state.clone(),
             update_function: self.update_function.clone(),
             native_event_resolvers: self.native_event_resolvers.clone(),
+            observer: self.observer.clone(),
         }
     }
 }
@@ -60,7 +65,7 @@ impl<C: AppComponent<State = State, Msg = Msg> + Clone, State: AppState + Clone,
 impl<C: AppComponent<State = State, Msg = Msg> + Clone, State: AppState + Clone, Msg: AppEvent>
     Runtime<C, State, Msg>
 {
-    pub fn new(app: &App<C, State, Msg>) -> Self {
+    pub fn new(app: &App<C, State, Msg>, observer: Arc<RuntimeObserver>) -> Self {
         let state = app.initial_state.clone();
         let root = app.root_component.render(&state, AppContext::new());
         Self {
@@ -69,8 +74,10 @@ impl<C: AppComponent<State = State, Msg = Msg> + Clone, State: AppState + Clone,
             root_component: app.root_component.clone(),
             root: NodeContainer::from_root(root.into()),
             native_event_resolvers: app.native_event_resolvers.clone(),
+            observer,
         }
     }
+
     pub fn initial_diff(&self) -> Vec<DiffOperation> {
         let init = Vec::new();
         let native_view = self.root.native_view(None);
@@ -104,7 +111,12 @@ impl<C: AppComponent<State = State, Msg = Msg> + Clone, State: AppState + Clone,
             .native_callbacks
             .get(&id)
             .ok_or(DiffError::NewCallbackNotFound(id))?;
-        self.execute_native_callback(&callback, event, &mut handling_result)?;
+        {
+            let timer = Timer::new("test");
+            self.execute_native_callback(&callback, event, &mut handling_result)?;
+            self.observer
+                .observe_time(RuntimeTimingCategory::ExecuteNativeCallback, timer)
+        }
 
         let EventHandlingResult {
             state_changes,
